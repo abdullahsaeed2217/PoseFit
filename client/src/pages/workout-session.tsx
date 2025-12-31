@@ -63,15 +63,21 @@ export default function WorkoutSession() {
 
   // Initialize TF.js and Model
   useEffect(() => {
+    let active = true;
     const loadModel = async () => {
-      await tf.ready();
-      const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MoveNet,
-        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
-      );
-      setModel(detector);
+      try {
+        await tf.ready();
+        const detector = await poseDetection.createDetector(
+          poseDetection.SupportedModels.MoveNet,
+          { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+        );
+        if (active) setModel(detector);
+      } catch (err) {
+        console.error("Failed to load pose detection model", err);
+      }
     };
     loadModel();
+    return () => { active = false; };
   }, []);
 
   // Detection Loop

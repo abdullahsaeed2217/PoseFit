@@ -48,34 +48,47 @@ function ProtectedRoute({
 }
 
 function Router() {
+  const { data: user, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
       
       {/* Member Routes */}
       <Route path="/member-dashboard">
-        <ProtectedRoute component={MemberDashboard} allowedRoles={["member"]} />
+        <LayoutShell>
+          <MemberDashboard />
+        </LayoutShell>
       </Route>
       <Route path="/workouts">
-        <ProtectedRoute component={MemberDashboard} allowedRoles={["member"]} />
+        <LayoutShell>
+          <MemberDashboard />
+        </LayoutShell>
       </Route>
       <Route path="/workout/:id">
-        <ProtectedRoute component={WorkoutSession} allowedRoles={["member"]} />
+        <LayoutShell>
+          <WorkoutSession />
+        </LayoutShell>
       </Route>
 
       {/* Trainer Routes */}
       <Route path="/trainer-dashboard">
-        <ProtectedRoute component={TrainerDashboard} allowedRoles={["trainer"]} />
+        <LayoutShell>
+          <TrainerDashboard />
+        </LayoutShell>
       </Route>
 
       {/* Root Redirect */}
       <Route path="/">
-        {() => {
-          const { data: user, isLoading } = useUser();
-          if (isLoading) return <div className="min-h-screen bg-background" />;
-          if (!user) return <Redirect to="/auth" />;
-          return <Redirect to={user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"} />;
-        }}
+        {!user ? <Redirect to="/auth" /> : <Redirect to={user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"} />}
       </Route>
 
       <Route component={NotFound} />
