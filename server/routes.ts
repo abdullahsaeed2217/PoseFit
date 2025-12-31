@@ -1,16 +1,104 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth } from "./auth";
+import { api } from "@shared/routes";
+import { z } from "zod";
+
+import { hashPassword } from "./auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  setupAuth(app);
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  // SEED DATA
+  if (app.get("env") === "development") {
+    const existingTrainer = await storage.getUserByUsername("trainer");
+    if (!existingTrainer) {
+      const hashedPassword = await hashPassword("trainer123");
+      const trainer = await storage.createUser({
+        username: "trainer",
+        password: hashedPassword,
+        role: "trainer",
+        name: "John Trainer",
+      });
+      
+      await storage.createWorkout({
+        title: "Full Body Blast",
+        description: "A complete workout for all muscle groups.",
+        trainerId: trainer.id,
+        difficulty: "medium",
+        exercises: [
+          { name: "Squats", duration: 60, target: "legs" },
+          { name: "Pushups", duration: 45, target: "chest" },
+          { name: "Plank", duration: 60, target: "core" }
+        ]
+      });
+      
+      console.log("Seeded trainer account: trainer / trainer123");
+    }
+  }
+
+  app.get(api.workouts.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const workouts = await storage.getWorkouts();
+    res.json(workouts);
+  });
+
+  app.get(api.workouts.get.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const workout = await storage.getWorkout(Number(req.params.id));
+    if (!workout) return res.sendStatus(404);
+    res.json(workout);
+  });
+
+  app.post(api.workouts.create.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "trainer") return res.status(403).send("Only trainers can create workouts");
+    
+    try {
+      const input = api.workouts.create.input.parse(req.body);
+      const workout = await storage.createWorkout(input);
+      res.status(201).json(workout);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json(err.errors);
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.post(api.sessions.create.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    try {
+      const input = api.sessions.create.input.parse(req.body);
+      const session = await storage.createSession(input);
+      res.status(201).json(session);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        res.status(400).json(err.errors);
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
+  app.get(api.sessions.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role === "trainer") {
+      const sessions = await storage.getAllSessions();
+      res.json(sessions);
+    } else {
+      // @ts-ignore
+      const sessions = await storage.getSessions(req.user.id);
+      res.json(sessions);
+    }
+  });
 
   return httpServer;
 }

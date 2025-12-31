@@ -1,18 +1,42 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role", { enum: ["member", "trainer"] }).notNull().default("member"),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const workouts = pgTable("workouts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  trainerId: integer("trainer_id").references(() => users.id),
+  difficulty: text("difficulty").notNull(), // easy, medium, hard
+  exercises: jsonb("exercises").notNull(), // Array of exercise details
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export const sessions = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  workoutId: integer("workout_id").references(() => workouts.id),
+  score: integer("score"),
+  duration: integer("duration"), // in seconds
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export const insertWorkoutSchema = createInsertSchema(workouts).omit({ id: true, createdAt: true });
+export const insertSessionSchema = createInsertSchema(sessions).omit({ id: true, completedAt: true });
+
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Workout = typeof workouts.$inferSelect;
+export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
