@@ -47,6 +47,10 @@ export function setupAuth(app: Express) {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
+        } else if (user.status === "pending") {
+          return done(null, false, { message: "Your account is pending admin approval." });
+        } else if (user.status === "rejected") {
+          return done(null, false, { message: "Your account has been rejected." });
         } else {
           return done(null, user);
         }

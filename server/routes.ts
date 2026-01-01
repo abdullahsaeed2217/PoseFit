@@ -24,6 +24,8 @@ export async function registerRoutes(
         role: "trainer",
         name: "John Trainer",
       });
+      // Admin auto-approves seed trainer
+      await storage.updateUser(trainer.id, { status: "approved" });
       
       await storage.createWorkout({
         title: "Full Body Blast",
@@ -43,12 +45,14 @@ export async function registerRoutes(
     const existingAdmin = await storage.getUserByUsername("muhammadabdullahsaeed383@gmail.com");
     if (!existingAdmin) {
       const hashedPassword = await hashPassword("abdullah1122");
-      await storage.createUser({
+      const admin = await storage.createUser({
         username: "muhammadabdullahsaeed383@gmail.com",
         password: hashedPassword,
         role: "admin",
         name: "Muhammad Abdullah Saeed",
       });
+      // Admin auto-approves themselves
+      await storage.updateUser(admin.id, { status: "approved" });
       console.log("Seeded admin account: muhammadabdullahsaeed383@gmail.com / abdullah1122");
     }
   }

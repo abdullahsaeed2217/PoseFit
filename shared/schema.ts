@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role", { enum: ["member", "trainer", "admin"] }).notNull().default("member"),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -31,7 +32,7 @@ export const sessions = pgTable("sessions", {
   completedAt: timestamp("completed_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, status: true });
 export const insertWorkoutSchema = createInsertSchema(workouts).omit({ id: true, createdAt: true });
 export const insertSessionSchema = createInsertSchema(sessions).omit({ id: true, completedAt: true });
 
