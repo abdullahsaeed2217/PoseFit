@@ -53,6 +53,37 @@ export const api = {
       },
     },
   },
+  admin: {
+    users: {
+      list: {
+        method: 'GET' as const,
+        path: '/api/admin/users',
+        responses: {
+          200: z.array(z.custom<typeof users.$inferSelect>()),
+          401: errorSchemas.unauthorized,
+          403: errorSchemas.unauthorized,
+        },
+      },
+      update: {
+        method: 'PATCH' as const,
+        path: '/api/admin/users/:id',
+        input: insertUserSchema.partial(),
+        responses: {
+          200: z.custom<typeof users.$inferSelect>(),
+          400: errorSchemas.validation,
+          403: errorSchemas.unauthorized,
+        },
+      },
+      delete: {
+        method: 'DELETE' as const,
+        path: '/api/admin/users/:id',
+        responses: {
+          200: z.void(),
+          403: errorSchemas.unauthorized,
+        },
+      },
+    },
+  },
   workouts: {
     list: {
       method: 'GET' as const,

@@ -39,6 +39,18 @@ export async function registerRoutes(
       
       console.log("Seeded trainer account: trainer / trainer123");
     }
+
+    const existingAdmin = await storage.getUserByUsername("admin");
+    if (!existingAdmin) {
+      const hashedPassword = await hashPassword("admin123");
+      await storage.createUser({
+        username: "admin",
+        password: hashedPassword,
+        role: "admin",
+        name: "System Admin",
+      });
+      console.log("Seeded admin account: admin / admin123");
+    }
   }
 
   app.get(api.workouts.list.path, async (req, res) => {
@@ -98,6 +110,38 @@ export async function registerRoutes(
       const sessions = await storage.getSessions(req.user.id);
       res.json(sessions);
     }
+  });
+
+  // ADMIN ROUTES
+  app.get(api.admin.users.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "admin") return res.sendStatus(403);
+    const users = await storage.getAllUsers();
+    res.json(users);
+  });
+
+  app.patch(api.admin.users.update.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "admin") return res.sendStatus(403);
+    try {
+      const id = parseInt(req.params.id);
+      const input = api.admin.users.update.input.parse(req.body);
+      const user = await storage.updateUser(id, input);
+      res.json(user);
+    } catch (err) {
+      res.status(400).json(err);
+    }
+  });
+
+  app.delete(api.admin.users.delete.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "admin") return res.sendStatus(403);
+    const id = parseInt(req.params.id);
+    await storage.deleteUser(id);
+    res.sendStatus(200);
   });
 
   return httpServer;

@@ -14,6 +14,11 @@ export interface IStorage {
   createSession(session: InsertSession): Promise<Session>;
   getSessions(userId: number): Promise<Session[]>;
   getAllSessions(): Promise<Session[]>; // For trainers
+
+  // Admin Panel
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
+  deleteUser(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -57,6 +62,20 @@ export class DatabaseStorage implements IStorage {
   
   async getAllSessions(): Promise<Session[]> {
     return await db.select().from(sessions);
+  }
+
+  // Admin Panel Implementation
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
+    const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 }
 

@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import AuthPage from "@/pages/auth";
 import MemberDashboard from "@/pages/member-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
+import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
 import NotFound from "@/pages/not-found";
 
@@ -86,9 +87,19 @@ function Router() {
         </LayoutShell>
       </Route>
 
+      {/* Admin Routes */}
+      <Route path="/admin-dashboard">
+        <LayoutShell>
+          <AdminDashboard />
+        </LayoutShell>
+      </Route>
+
       {/* Root Redirect */}
       <Route path="/">
-        {!user ? <Redirect to="/auth" /> : <Redirect to={user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"} />}
+        {!user ? <Redirect to="/auth" /> : <Redirect to={
+          user.role === "admin" ? "/admin-dashboard" : 
+          user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
+        } />}
       </Route>
 
       <Route component={NotFound} />
