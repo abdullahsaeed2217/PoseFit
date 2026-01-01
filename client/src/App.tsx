@@ -7,46 +7,13 @@ import { LayoutShell } from "@/components/layout-shell";
 import { useUser } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
+import HomePage from "@/pages/home";
 import AuthPage from "@/pages/auth";
 import MemberDashboard from "@/pages/member-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
-
+import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
 import NotFound from "@/pages/not-found";
-
-// Protected Route Wrapper
-function ProtectedRoute({ 
-  component: Component, 
-  allowedRoles 
-}: { 
-  component: React.ComponentType, 
-  allowedRoles?: ("member" | "trainer")[] 
-}) {
-  const { data: user, isLoading } = useUser();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-
-  if (allowedRoles && !allowedRoles.includes(user.role as any)) {
-    // Redirect to their appropriate dashboard if role mismatch
-    return <Redirect to={user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"} />;
-  }
-
-  return (
-    <LayoutShell>
-      <Component />
-    </LayoutShell>
-  );
-}
 
 function Router() {
   const { data: user, isLoading } = useUser();
@@ -61,6 +28,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       
       {/* Member Routes */}
@@ -87,10 +55,15 @@ function Router() {
         </LayoutShell>
       </Route>
 
-      
+      {/* Admin Routes */}
+      <Route path="/admin-dashboard">
+        <LayoutShell>
+          <AdminDashboard />
+        </LayoutShell>
+      </Route>
 
-      {/* Root Redirect */}
-      <Route path="/">
+      {/* Root Redirect for authenticated users */}
+      <Route path="/dashboard">
         {!user ? <Redirect to="/auth" /> : <Redirect to={
           user.role === "admin" ? "/admin-dashboard" : 
           user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
