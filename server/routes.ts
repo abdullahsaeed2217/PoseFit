@@ -40,16 +40,16 @@ export async function registerRoutes(
       console.log("Seeded trainer account: trainer / trainer123");
     }
 
-    const existingAdmin = await storage.getUserByUsername("admin");
+    const existingAdmin = await storage.getUserByUsername("muhammadabdullahsaeed383@gmail.com");
     if (!existingAdmin) {
-      const hashedPassword = await hashPassword("admin123");
+      const hashedPassword = await hashPassword("abdullah1122");
       await storage.createUser({
-        username: "admin",
+        username: "muhammadabdullahsaeed383@gmail.com",
         password: hashedPassword,
         role: "admin",
-        name: "System Admin",
+        name: "Muhammad Abdullah Saeed",
       });
-      console.log("Seeded admin account: admin / admin123");
+      console.log("Seeded admin account: muhammadabdullahsaeed383@gmail.com / abdullah1122");
     }
   }
 
