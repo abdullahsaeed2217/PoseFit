@@ -14,6 +14,7 @@ export interface IStorage {
   createSession(session: InsertSession): Promise<Session>;
   getSessions(userId: number): Promise<Session[]>;
   getAllSessions(): Promise<Session[]>; // For trainers
+  updateSessionFeedback(sessionId: number, feedback: string): Promise<Session>;
 
   // Admin Panel
   getAllUsers(): Promise<User[]>;
@@ -62,6 +63,14 @@ export class DatabaseStorage implements IStorage {
   
   async getAllSessions(): Promise<Session[]> {
     return await db.select().from(sessions);
+  }
+
+  async updateSessionFeedback(sessionId: number, feedback: string): Promise<Session> {
+    const [updated] = await db.update(sessions)
+      .set({ feedback })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+    return updated;
   }
 
   // Admin Panel Implementation

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, users, workouts, sessions } from './schema';
+import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, users, workouts, sessions, type User, type Workout, type Session } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -21,7 +21,7 @@ export const api = {
       path: '/api/register',
       input: insertUserSchema,
       responses: {
-        201: z.custom<typeof users.$inferSelect>(),
+        201: z.custom<User>(),
         400: errorSchemas.validation,
       },
     },
@@ -33,7 +33,7 @@ export const api = {
         password: z.string(),
       }),
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.custom<User>(),
         401: errorSchemas.unauthorized,
       },
     },
@@ -48,7 +48,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/user',
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: z.custom<User>(),
         401: errorSchemas.unauthorized,
       },
     },
@@ -59,7 +59,7 @@ export const api = {
         method: 'GET' as const,
         path: '/api/admin/users',
         responses: {
-          200: z.array(z.custom<typeof users.$inferSelect>()),
+          200: z.array(z.custom<User>()),
           401: errorSchemas.unauthorized,
           403: errorSchemas.unauthorized,
         },
@@ -69,7 +69,7 @@ export const api = {
         path: '/api/admin/users/:id',
         input: insertUserSchema.partial(),
         responses: {
-          200: z.custom<typeof users.$inferSelect>(),
+          200: z.custom<User>(),
           400: errorSchemas.validation,
           403: errorSchemas.unauthorized,
         },
@@ -89,14 +89,14 @@ export const api = {
       method: 'GET' as const,
       path: '/api/workouts',
       responses: {
-        200: z.array(z.custom<typeof workouts.$inferSelect>()),
+        200: z.array(z.custom<Workout>()),
       },
     },
     get: {
       method: 'GET' as const,
       path: '/api/workouts/:id',
       responses: {
-        200: z.custom<typeof workouts.$inferSelect>(),
+        200: z.custom<Workout>(),
         404: errorSchemas.notFound,
       },
     },
@@ -105,7 +105,7 @@ export const api = {
       path: '/api/workouts',
       input: insertWorkoutSchema,
       responses: {
-        201: z.custom<typeof workouts.$inferSelect>(),
+        201: z.custom<Workout>(),
         400: errorSchemas.validation,
         401: errorSchemas.unauthorized,
       },
@@ -117,7 +117,7 @@ export const api = {
       path: '/api/sessions',
       input: insertSessionSchema,
       responses: {
-        201: z.custom<typeof sessions.$inferSelect>(),
+        201: z.custom<Session>(),
         400: errorSchemas.validation,
       },
     },
@@ -125,7 +125,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/sessions',
       responses: {
-        200: z.array(z.custom<typeof sessions.$inferSelect>()),
+        200: z.array(z.custom<Session>()),
       },
     },
   },
@@ -142,3 +142,7 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
   }
   return url;
 }
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
+export type InsertSession = z.infer<typeof insertSessionSchema>;

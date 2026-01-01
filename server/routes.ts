@@ -112,6 +112,15 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/sessions/:id/feedback", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "trainer") return res.sendStatus(403);
+    const { feedback } = req.body;
+    const session = await storage.updateSessionFeedback(Number(req.params.id), feedback);
+    res.json(session);
+  });
+
   // ADMIN ROUTES
   app.get(api.admin.users.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

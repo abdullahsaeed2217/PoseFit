@@ -27,6 +27,7 @@ export const sessions = pgTable("sessions", {
   workoutId: integer("workout_id").references(() => workouts.id),
   score: integer("score"),
   duration: integer("duration"), // in seconds
+  feedback: text("feedback"),
   completedAt: timestamp("completed_at").defaultNow(),
 });
 

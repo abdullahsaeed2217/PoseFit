@@ -1,18 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type InsertUser } from "@shared/routes";
 import { useLocation } from "wouter";
-import { z } from "zod";
+import { User } from "@shared/schema";
 
 export function useUser() {
-  return useQuery({
+  return useQuery<User | null>({
     queryKey: [api.auth.user.path],
     queryFn: async () => {
       const res = await fetch(api.auth.user.path);
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
-      return api.auth.user.responses[200].parse(await res.json());
+      return await res.json();
     },
     retry: false,
+  });
+}
+
+export function useAllUsers() {
+  return useQuery<User[]>({
+    queryKey: [api.admin.users.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.admin.users.list.path);
+      if (!res.ok) throw new Error("Failed to fetch all users");
+      return await res.json();
+    },
   });
 }
 
@@ -35,12 +46,13 @@ export function useLogin() {
         throw new Error("Login failed");
       }
 
-      return api.auth.login.responses[200].parse(await res.json());
+      return await res.json();
     },
-    onSuccess: (user) => {
+    onSuccess: (user: User) => {
       queryClient.setQueryData([api.auth.user.path], user);
-      // Redirect based on role
-      if (user.role === "trainer") {
+      if (user.role === "admin") {
+        setLocation("/admin-dashboard");
+      } else if (user.role === "trainer") {
         setLocation("/trainer-dashboard");
       } else {
         setLocation("/member-dashboard");
@@ -69,9 +81,9 @@ export function useRegister() {
         throw new Error("Registration failed");
       }
 
-      return api.auth.register.responses[201].parse(await res.json());
+      return await res.json();
     },
-    onSuccess: (user) => {
+    onSuccess: (user: User) => {
       queryClient.setQueryData([api.auth.user.path], user);
       if (user.role === "trainer") {
         setLocation("/trainer-dashboard");
@@ -92,7 +104,7 @@ export function useLogout() {
     },
     onSuccess: () => {
       queryClient.setQueryData([api.auth.user.path], null);
-      setLocation("/auth");
+      setLocation("/");
     },
   });
 }
