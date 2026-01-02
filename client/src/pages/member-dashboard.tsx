@@ -11,6 +11,8 @@ import { WorkoutSummary } from "@/components/workout-summary";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { Session } from "@shared/schema";
+import { ReportingAnalytics } from "@/components/reporting-analytics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MemberDashboard() {
   const { data: user } = useUser();
@@ -59,159 +61,174 @@ export default function MemberDashboard() {
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Points</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-white">{user?.totalPoints || 0}</span>
-              <span className="text-sm text-yellow-400 font-medium flex items-center gap-1">
-                <Star className="w-3 h-3 fill-yellow-400" /> XP
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview" className="space-y-8">
+        <TabsList className="bg-white/5 border border-white/10 p-1">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Reporting & Analytics</TabsTrigger>
+        </TabsList>
 
-        <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-secondary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Minutes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-white">{Math.round(totalDuration / 60)}</span>
-              <span className="text-sm text-muted-foreground">mins</span>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="overview" className="space-y-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Points</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{user?.totalPoints || 0}</span>
+                  <span className="text-sm text-yellow-400 font-medium flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-yellow-400" /> XP
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-indigo-500/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Avg Form Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-white">{avgScore}%</span>
-            </div>
-            {/* Simple progress bar */}
-            <div className="h-2 w-full bg-white/10 rounded-full mt-3 overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" 
-                style={{ width: `${avgScore}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-secondary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Minutes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{Math.round(totalDuration / 60)}</span>
+                  <span className="text-sm text-muted-foreground">mins</span>
+                </div>
+              </CardContent>
+            </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-12">
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Recommended For You</h2>
-              <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm">View All</Link>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {workouts?.slice(0, 4).map((workout) => (
-                <Card key={workout.id} className="group relative overflow-hidden border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardHeader>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`
-                        px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                        ${workout.difficulty === 'hard' ? 'bg-red-500/20 text-red-400' : 
-                          workout.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' : 
-                          'bg-green-500/20 text-green-400'}
-                      `}>
-                        {workout.difficulty}
-                      </span>
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <CardTitle className="text-xl group-hover:text-primary transition-colors">{workout.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">{workout.description}</CardDescription>
-                  </CardHeader>
-                  <CardFooter>
-                    <Link href={`/workout/${workout.id}`} className="w-full">
-                      <Button className="w-full bg-white/5 hover:bg-primary hover:text-white border border-white/10 transition-all">
-                        <Play className="w-4 h-4 mr-2" /> Start Workout
-                      </Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Recent History</h2>
-            </div>
-            <div className="space-y-4">
-              {sessions?.slice(0, 5).map((session) => (
-                <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
-                  <CardContent className="p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                        <CheckCircle2 className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-8">
-                      <div className="text-right">
-                        <div className="text-sm font-bold">{session.score}%</div>
-                        <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
-                          <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="space-y-6">
-          <Leaderboard />
-          
-          <Card className="glass-panel border-white/5 h-[400px]">
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Form Scores</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <XAxis dataKey="name" hide />
-                  <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                    contentStyle={{ backgroundColor: '#1a1b26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-indigo-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Avg Form Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{avgScore}%</span>
+                </div>
+                {/* Simple progress bar */}
+                <div className="h-2 w-full bg-white/10 rounded-full mt-3 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" 
+                    style={{ width: `${avgScore}%` }}
                   />
-                  <Bar dataKey="score" radius={[4, 4, 0, 0]}>
-                    {chartData?.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(263, 85%, 60%)' : 'hsl(172, 66%, 50%)'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Recommended Workouts & Recent Activity */}
+            <div className="lg:col-span-2 space-y-12">
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Recommended For You</h2>
+                  <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm">View All</Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {workouts?.slice(0, 4).map((workout) => (
+                    <Card key={workout.id} className="group relative overflow-hidden border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <CardHeader>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className={`
+                            px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                            ${workout.difficulty === 'hard' ? 'bg-red-500/20 text-red-400' : 
+                              workout.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' : 
+                              'bg-green-500/20 text-green-400'}
+                          `}>
+                            {workout.difficulty}
+                          </span>
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{workout.title}</CardTitle>
+                        <CardDescription className="line-clamp-2">{workout.description}</CardDescription>
+                      </CardHeader>
+                      <CardFooter>
+                        <Link href={`/workout/${workout.id}`} className="w-full">
+                          <Button className="w-full bg-white/5 hover:bg-primary hover:text-white border border-white/10 transition-all">
+                            <Play className="w-4 h-4 mr-2" /> Start Workout
+                          </Button>
+                        </Link>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Recent History</h2>
+                </div>
+                <div className="space-y-4">
+                  {sessions?.slice(0, 5).map((session) => (
+                    <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
+                      <CardContent className="p-6 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-8">
+                          <div className="text-right">
+                            <div className="text-sm font-bold">{session.score}%</div>
+                            <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
+                          </div>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
+                              <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            {/* Leaderboard Section */}
+            <div className="space-y-6">
+              <Leaderboard />
+              
+              <Card className="glass-panel border-white/5 h-[400px]">
+                <CardHeader>
+                  <CardTitle className="text-lg">Recent Form Scores</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <XAxis dataKey="name" hide />
+                      <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                        contentStyle={{ backgroundColor: '#1a1b26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      />
+                      <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                        {chartData?.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(263, 85%, 60%)' : 'hsl(172, 66%, 50%)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <ReportingAnalytics />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
