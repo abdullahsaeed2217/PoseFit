@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, users, workouts, sessions, type User, type Workout, type Session } from './schema';
+import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, type User, type Workout, type Session } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -19,7 +19,7 @@ export const api = {
     register: {
       method: 'POST' as const,
       path: '/api/register',
-      input: insertUserSchema,
+      input: insertUserSchema.omit({ status: true }),
       responses: {
         201: z.custom<User>(),
         400: errorSchemas.validation,

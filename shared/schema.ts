@@ -32,7 +32,7 @@ export const sessions = pgTable("sessions", {
   completedAt: timestamp("completed_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true, status: true });
+export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertWorkoutSchema = createInsertSchema(workouts).omit({ id: true, createdAt: true });
 export const insertSessionSchema = createInsertSchema(sessions).omit({ id: true, completedAt: true });
 
