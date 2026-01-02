@@ -3,7 +3,7 @@ import { useUser, useLogout } from "@/hooks/use-auth";
 import { Dumbbell, Activity, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function LayoutShell({ children }: { children: React.ReactNode }) {
+export function LayoutShell({ children, headerAction }: { children: React.ReactNode, headerAction?: React.ReactNode }) {
   const { data: user } = useUser();
   const { mutate: logout } = useLogout();
   const [location] = useLocation();
@@ -16,13 +16,18 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
       {/* Sidebar / Navigation */}
       <aside className="w-full md:w-64 bg-card border-r border-border flex flex-col sticky top-0 md:h-screen z-40">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-            <Activity className="text-white w-6 h-6" />
+        <div className="p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Activity className="text-white w-6 h-6" />
+            </div>
+            <span className="text-2xl font-display font-bold text-white tracking-tight">
+              PoseToFit
+            </span>
           </div>
-          <span className="text-2xl font-display font-bold text-white tracking-tight">
-            PoseToFit
-          </span>
+          <div className="md:hidden flex items-center gap-2">
+            {headerAction}
+          </div>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
@@ -74,6 +79,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
+        <header className="hidden md:flex items-center justify-end p-4 border-b border-white/5 bg-card/50 backdrop-blur-md sticky top-0 z-50 h-16">
+          <div className="flex items-center gap-4">
+            {headerAction}
+          </div>
+        </header>
         <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-12 animate-in fade-in duration-500">
           {children}
         </div>
