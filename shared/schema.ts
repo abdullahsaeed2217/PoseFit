@@ -30,6 +30,7 @@ export const sessions = pgTable("sessions", {
   score: integer("score"),
   duration: integer("duration"), // in seconds
   feedback: text("feedback"),
+  exerciseData: jsonb("exercise_data"), // Detailed sets/reps/duration/posture-stats per exercise
   completedAt: timestamp("completed_at").defaultNow(),
 });
 
