@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { users, workouts, sessions, achievements, notifications, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification } from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -21,6 +21,11 @@ export interface IStorage {
   getAchievements(userId: number): Promise<Achievement[]>;
   awardAchievement(achievement: InsertAchievement): Promise<Achievement>;
   updateUserPoints(userId: number, points: number): Promise<void>;
+
+  // Notifications
+  getNotifications(userId: number): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: number): Promise<void>;
 
   // Admin Panel
   getAllUsers(): Promise<User[]>;
@@ -99,10 +104,35 @@ export class DatabaseStorage implements IStorage {
   async updateUserPoints(userId: number, points: number): Promise<void> {
     const user = await this.getUser(userId);
     if (user) {
+      const newPoints = (user.totalPoints || 0) + points;
       await db.update(users)
-        .set({ totalPoints: (user.totalPoints || 0) + points })
+        .set({ totalPoints: newPoints })
         .where(eq(users.id, userId));
+      
+      // Auto-award notification for workout completion
+      await this.createNotification({
+        userId,
+        title: "Workout Completed!",
+        message: `You earned ${points} points for your session. Keep it up!`,
+        type: "success",
+        read: false
+      });
     }
+  }
+
+  async getNotifications(userId: number): Promise<Notification[]> {
+    return await db.select().from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async markNotificationRead(id: number): Promise<void> {
+    await db.update(notifications).set({ read: true }).where(eq(notifications.id, id));
   }
 
   async getAllUsers(): Promise<User[]> {

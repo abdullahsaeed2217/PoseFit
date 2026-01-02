@@ -147,6 +147,22 @@ export const api = {
       },
     },
   },
+  notifications: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/notifications',
+      responses: {
+        200: z.array(z.custom<Notification>()),
+      },
+    },
+    read: {
+      method: 'PATCH' as const,
+      path: '/api/notifications/:id/read',
+      responses: {
+        200: z.void(),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {

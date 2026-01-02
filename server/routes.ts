@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { api } from "@shared/routes";
 import { z } from "zod";
-
 import { hashPassword } from "./auth";
 
 export async function registerRoutes(
@@ -24,7 +23,6 @@ export async function registerRoutes(
         role: "trainer",
         name: "John Trainer",
       });
-      // Admin auto-approves seed trainer
       await storage.updateUser(trainer.id, { status: "approved" });
       
       await storage.createWorkout({
@@ -38,7 +36,6 @@ export async function registerRoutes(
           { name: "Plank", duration: 60, target: "core" }
         ]
       });
-      
       console.log("Seeded trainer account: trainer / trainer123");
     }
 
@@ -51,7 +48,6 @@ export async function registerRoutes(
         role: "admin",
         name: "Muhammad Abdullah Saeed",
       });
-      // Admin auto-approves themselves
       await storage.updateUser(admin.id, { status: "approved" });
       console.log("Seeded admin account: muhammadabdullahsaeed383@gmail.com / abdullah1122");
     }
@@ -74,17 +70,13 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.sendStatus(401);
     // @ts-ignore
     if (req.user.role !== "trainer") return res.status(403).send("Only trainers can create workouts");
-    
     try {
       const input = api.workouts.create.input.parse(req.body);
       const workout = await storage.createWorkout(input);
       res.status(201).json(workout);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json(err.errors);
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
+      if (err instanceof z.ZodError) res.status(400).json(err.errors);
+      else res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -95,11 +87,8 @@ export async function registerRoutes(
       const session = await storage.createSession(input);
       res.status(201).json(session);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        res.status(400).json(err.errors);
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
+      if (err instanceof z.ZodError) res.status(400).json(err.errors);
+      else res.status(500).json({ message: "Internal server error" });
     }
   });
 
@@ -129,16 +118,37 @@ export async function registerRoutes(
     res.json(achievements);
   });
 
+  app.get(api.notifications.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    const list = await storage.getNotifications(req.user.id);
+    res.json(list);
+  });
+
+  app.patch(api.notifications.read.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const id = parseInt(req.params.id);
+    await storage.markNotificationRead(id);
+    res.sendStatus(200);
+  });
+
   app.patch("/api/sessions/:id/feedback", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     // @ts-ignore
     if (req.user.role !== "trainer") return res.sendStatus(403);
     const { feedback } = req.body;
     const session = await storage.updateSessionFeedback(Number(req.params.id), feedback);
+    
+    await storage.createNotification({
+      userId: session.userId,
+      title: "New Trainer Feedback",
+      message: "Your trainer has left feedback on your recent session.",
+      type: "info",
+      read: false
+    });
     res.json(session);
   });
 
-  // ADMIN ROUTES
   app.get(api.admin.users.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     // @ts-ignore

@@ -15,6 +15,8 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
 import NotFound from "@/pages/not-found";
 
+import { NotificationBell } from "@/components/notifications";
+
 function Router() {
   const { data: user, isLoading } = useUser();
 
@@ -33,31 +35,31 @@ function Router() {
       
       {/* Member Routes */}
       <Route path="/member-dashboard">
-        <LayoutShell>
+        <LayoutShell headerAction={<NotificationBell />}>
           <MemberDashboard />
         </LayoutShell>
       </Route>
       <Route path="/workouts">
-        <LayoutShell>
+        <LayoutShell headerAction={<NotificationBell />}>
           <MemberDashboard />
         </LayoutShell>
       </Route>
       <Route path="/workout/:id">
-        <LayoutShell>
+        <LayoutShell headerAction={<NotificationBell />}>
           <WorkoutSession />
         </LayoutShell>
       </Route>
 
       {/* Trainer Routes */}
       <Route path="/trainer-dashboard">
-        <LayoutShell>
+        <LayoutShell headerAction={<NotificationBell />}>
           <TrainerDashboard />
         </LayoutShell>
       </Route>
 
       {/* Admin Routes */}
       <Route path="/admin-dashboard">
-        <LayoutShell>
+        <LayoutShell headerAction={<NotificationBell />}>
           <AdminDashboard />
         </LayoutShell>
       </Route>
