@@ -14,6 +14,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { User, Session } from "@shared/schema";
 
+import { Leaderboard } from "@/components/leaderboard";
+
 export default function TrainerDashboard() {
   const { data: user } = useUser();
   const { data: workouts } = useWorkouts();
@@ -152,12 +154,15 @@ export default function TrainerDashboard() {
         {/* Performance Analysis */}
         <div className="lg:col-span-2 space-y-6">
           {!selectedMember ? (
-            <div className="h-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] p-12 text-center">
-              <div className="space-y-4">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                  <Activity className="w-8 h-8 text-muted-foreground" />
+            <div className="grid grid-cols-1 gap-8">
+              <Leaderboard />
+              <div className="h-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] p-12 text-center">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                    <Activity className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground">Select a member from the left to view detailed analysis and provide feedback.</p>
                 </div>
-                <p className="text-muted-foreground">Select a member from the left to view detailed analysis and provide feedback.</p>
               </div>
             </div>
           ) : (

@@ -116,6 +116,19 @@ export async function registerRoutes(
     }
   });
 
+  app.get(api.leaderboard.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const leaderboard = await storage.getLeaderboard();
+    res.json(leaderboard);
+  });
+
+  app.get(api.achievements.list.path, async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = parseInt(req.params.userId);
+    const achievements = await storage.getAchievements(userId);
+    res.json(achievements);
+  });
+
   app.patch("/api/sessions/:id/feedback", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     // @ts-ignore

@@ -28,6 +28,8 @@ import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle,
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 
+import { Leaderboard } from "@/components/leaderboard";
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const { data: users, isLoading } = useQuery<User[]>({
@@ -189,15 +191,18 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="all">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>System Directory</CardTitle>
-              <CardDescription>Full list of all registered users in the platform.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserTable data={users || []} />
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Card className="glass-panel lg:col-span-2">
+              <CardHeader>
+                <CardTitle>System Directory</CardTitle>
+                <CardDescription>Full list of all registered users in the platform.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserTable data={users || []} />
+              </CardContent>
+            </Card>
+            <Leaderboard />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

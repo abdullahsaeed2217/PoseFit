@@ -1,10 +1,11 @@
 import { useWorkouts, useSessions } from "@/hooks/use-workouts";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, TrendingUp, Clock, Calendar, ChevronRight } from "lucide-react";
+import { Play, TrendingUp, Clock, Calendar, ChevronRight, Activity, Dumbbell, Star } from "lucide-react";
 import { Link } from "wouter";
 import { useUser } from "@/hooks/use-auth";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Leaderboard } from "@/components/leaderboard";
 
 export default function MemberDashboard() {
   const { data: user } = useUser();
@@ -28,7 +29,7 @@ export default function MemberDashboard() {
   const totalSessions = sessions?.length || 0;
   const totalDuration = sessions?.reduce((acc, curr) => acc + (curr.duration || 0), 0) || 0;
   const avgScore = totalSessions > 0 
-    ? Math.round(sessions?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0 / totalSessions) 
+    ? Math.round((sessions?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0) / totalSessions) 
     : 0;
 
   // Recent activity data for chart
@@ -57,13 +58,13 @@ export default function MemberDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-primary/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Workouts</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Points</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-white">{totalSessions}</span>
-              <span className="text-sm text-green-400 font-medium flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> +2 this week
+              <span className="text-4xl font-bold text-white">{user?.totalPoints || 0}</span>
+              <span className="text-sm text-yellow-400 font-medium flex items-center gap-1">
+                <Star className="w-3 h-3 fill-yellow-400" /> XP
               </span>
             </div>
           </CardContent>
@@ -139,9 +140,10 @@ export default function MemberDashboard() {
           </div>
         </div>
 
-        {/* Progress Chart */}
+        {/* Leaderboard Section */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Performance</h2>
+          <Leaderboard />
+          
           <Card className="glass-panel border-white/5 h-[400px]">
             <CardHeader>
               <CardTitle className="text-lg">Recent Form Scores</CardTitle>

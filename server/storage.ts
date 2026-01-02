@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, workouts, sessions, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, workouts, sessions, achievements, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -13,12 +13,18 @@ export interface IStorage {
   
   createSession(session: InsertSession): Promise<Session>;
   getSessions(userId: number): Promise<Session[]>;
-  getAllSessions(): Promise<Session[]>; // For trainers
+  getAllSessions(): Promise<Session[]>;
   updateSessionFeedback(sessionId: number, feedback: string): Promise<Session>;
+
+  // Leaderboard & Achievements
+  getLeaderboard(): Promise<User[]>;
+  getAchievements(userId: number): Promise<Achievement[]>;
+  awardAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  updateUserPoints(userId: number, points: number): Promise<void>;
 
   // Admin Panel
   getAllUsers(): Promise<User[]>;
-  updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
+  updateUser(id: number, updates: Partial<InsertUser | { status: string, totalPoints: number }>): Promise<User>;
   deleteUser(id: number): Promise<void>;
 }
 
@@ -54,6 +60,10 @@ export class DatabaseStorage implements IStorage {
 
   async createSession(session: InsertSession): Promise<Session> {
     const [newSession] = await db.insert(sessions).values(session).returning();
+    // Award points based on session score
+    if (session.score) {
+      await this.updateUserPoints(session.userId, session.score);
+    }
     return newSession;
   }
 
@@ -73,12 +83,33 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  // Admin Panel Implementation
+  async getLeaderboard(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.role, "member")).orderBy(desc(users.totalPoints)).limit(10);
+  }
+
+  async getAchievements(userId: number): Promise<Achievement[]> {
+    return await db.select().from(achievements).where(eq(achievements.userId, userId));
+  }
+
+  async awardAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const [newAchievement] = await db.insert(achievements).values(achievement).returning();
+    return newAchievement;
+  }
+
+  async updateUserPoints(userId: number, points: number): Promise<void> {
+    const user = await this.getUser(userId);
+    if (user) {
+      await db.update(users)
+        .set({ totalPoints: (user.totalPoints || 0) + points })
+        .where(eq(users.id, userId));
+    }
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
   }
 
-  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
+  async updateUser(id: number, updates: any): Promise<User> {
     const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return user;
   }

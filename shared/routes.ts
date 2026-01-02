@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, type User, type Workout, type Session } from './schema';
+import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, insertAchievementSchema, type User, type Workout, type Session, type Achievement } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -67,7 +67,7 @@ export const api = {
       update: {
         method: 'PATCH' as const,
         path: '/api/admin/users/:id',
-        input: insertUserSchema.partial(),
+        input: insertUserSchema.partial().extend({ status: z.string().optional() }),
         responses: {
           200: z.custom<User>(),
           400: errorSchemas.validation,
@@ -129,6 +129,24 @@ export const api = {
       },
     },
   },
+  leaderboard: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/leaderboard',
+      responses: {
+        200: z.array(z.custom<User>()),
+      },
+    },
+  },
+  achievements: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/achievements/:userId',
+      responses: {
+        200: z.array(z.custom<Achievement>()),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
@@ -146,3 +164,4 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
