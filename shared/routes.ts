@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, insertAchievementSchema, type User, type Workout, type Session, type Achievement } from './schema';
+import { insertUserSchema, insertWorkoutSchema, insertSessionSchema, insertAchievementSchema, insertNotificationSchema, type User, type Workout, type Session, type Achievement, type Notification } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -181,3 +181,4 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
 export type InsertSession = z.infer<typeof insertSessionSchema>;
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
