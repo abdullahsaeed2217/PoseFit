@@ -85,6 +85,10 @@ export function setupAuth(app: Express) {
 
       req.login(user, (err) => {
         if (err) return next(err);
+        // Don't send the user object if they are pending, instead send a status indicating they need approval
+        if (user.status === "pending") {
+          return res.status(201).json({ ...user, status: "pending", message: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours." });
+        }
         res.status(201).json(user);
       });
     } catch (err) {

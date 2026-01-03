@@ -41,6 +41,15 @@ export default function AuthPage() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     register({ username, password, name, role }, {
+      onSuccess: (user: any) => {
+        if (user.status === "pending") {
+          toast({
+            title: "Registration Successful",
+            description: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours.",
+            duration: 10000,
+          });
+        }
+      },
       onError: (err) => toast({ 
         title: "Registration failed", 
         description: err.message, 

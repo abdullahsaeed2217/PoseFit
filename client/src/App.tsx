@@ -17,6 +17,8 @@ import NotFound from "@/pages/not-found";
 
 import { NotificationBell } from "@/components/notifications";
 
+import { Button } from "@/components/ui/button";
+
 function Router() {
   const { data: user, isLoading } = useUser();
 
@@ -24,6 +26,29 @@ function Router() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (user && user.status === "pending") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 text-center">
+        <div className="max-w-md space-y-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-500/10 mb-4">
+            <Loader2 className="w-10 h-10 text-yellow-500 animate-spin" />
+          </div>
+          <h1 className="text-3xl font-display font-bold text-white">Approval Pending</h1>
+          <p className="text-muted-foreground text-lg">
+            Your account status is pending to admin. Please check your approval status by signing in after 2 hours.
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-8 border-white/10"
+            onClick={() => window.location.href = "/auth"}
+          >
+            Back to Login
+          </Button>
+        </div>
       </div>
     );
   }
