@@ -116,81 +116,56 @@ export default function MemberDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recommended Workouts & Recent Activity */}
+            {/* Recent Activity Section */}
             <div className="lg:col-span-2 space-y-12">
               <section className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Recommended For You</h2>
-                  <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm">View All</Link>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {workouts?.slice(0, 4).map((workout) => (
-                    <Card key={workout.id} className="group relative overflow-hidden border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <CardHeader>
-                        <div className="flex justify-between items-start mb-2">
-                          <span className={`
-                            px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
-                            ${workout.difficulty === 'hard' ? 'bg-red-500/20 text-red-400' : 
-                              workout.difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400' : 
-                              'bg-green-500/20 text-green-400'}
-                          `}>
-                            {workout.difficulty}
-                          </span>
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <CardTitle className="text-xl group-hover:text-primary transition-colors">{workout.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">{workout.description}</CardDescription>
-                      </CardHeader>
-                      <CardFooter>
-                        <Link href={`/workout/${workout.id}`} className="w-full">
-                          <Button className="w-full bg-white/5 hover:bg-primary hover:text-white border border-white/10 transition-all">
-                            <Play className="w-4 h-4 mr-2" /> Start Workout
-                          </Button>
-                        </Link>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              </section>
-
-              <section className="space-y-6">
-                <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold">Recent History</h2>
+                  <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1">
+                    Start New <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
                 <div className="space-y-4">
-                  {sessions?.slice(0, 5).map((session) => (
-                    <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
-                      <CardContent className="p-6 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                            <CheckCircle2 className="w-6 h-6" />
+                  {sessions?.length === 0 ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                      <p className="text-muted-foreground">No recent activity. Start your first workout!</p>
+                      <Link href="/workouts" className="mt-4 inline-block">
+                        <Button variant="outline" size="sm">Explore Workouts</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    sessions?.slice(0, 5).map((session) => (
+                      <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                              <CheckCircle2 className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
-                            <p className="text-xs text-muted-foreground">
-                              {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
-                            </p>
+                          <div className="flex items-center gap-8">
+                            <div className="text-right">
+                              <div className="text-sm font-bold">{session.score}%</div>
+                              <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
+                            </div>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
+                                <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
+                              </DialogContent>
+                            </Dialog>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-8">
-                          <div className="text-right">
-                            <div className="text-sm font-bold">{session.score}%</div>
-                            <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
-                          </div>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
-                              <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </section>
             </div>

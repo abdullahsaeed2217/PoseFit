@@ -13,6 +13,7 @@ import MemberDashboard from "@/pages/member-dashboard";
 import TrainerDashboard from "@/pages/trainer-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
+import WorkoutsPage from "@/pages/workouts";
 import NotFound from "@/pages/not-found";
 
 import { NotificationBell } from "@/components/notifications";
@@ -66,7 +67,7 @@ function Router() {
       </Route>
       <Route path="/workouts">
         <LayoutShell headerAction={<NotificationBell />}>
-          <MemberDashboard />
+          <WorkoutsPage />
         </LayoutShell>
       </Route>
       <Route path="/workout/:id">
