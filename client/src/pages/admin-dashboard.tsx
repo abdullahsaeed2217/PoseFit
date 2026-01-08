@@ -24,9 +24,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock, Users, ArrowUpRight } from "lucide-react";
+import { useState, useMemo } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { format } from "date-fns";
 
 import { Leaderboard } from "@/components/leaderboard";
 
@@ -56,6 +57,16 @@ export default function AdminDashboard() {
     },
   });
 
+  const stats = useMemo(() => {
+    if (!users) return { total: 0, pending: 0, approved: 0, rejected: 0 };
+    return {
+      total: users.length,
+      pending: users.filter(u => u.status === "pending").length,
+      approved: users.filter(u => u.status === "approved").length,
+      rejected: users.filter(u => u.status === "rejected").length,
+    };
+  }, [users]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -69,129 +80,172 @@ export default function AdminDashboard() {
   const approvedUsers = users?.filter(u => u.status === "approved") || [];
 
   const UserTable = ({ data, showActions = true }: { data: User[], showActions?: boolean }) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>User</TableHead>
-          <TableHead>Username</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Joining Date</TableHead>
-          {showActions && <TableHead className="text-right">Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell className="font-medium">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <UserIcon className="w-4 h-4 text-primary" />
-                </div>
-                {user.name}
-              </div>
-            </TableCell>
-            <TableCell>{user.username}</TableCell>
-            <TableCell>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                user.role === 'trainer' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                'bg-green-500/10 text-green-400 border border-green-500/20'
-              }`}>
-                {user.role === 'admin' && <Shield className="w-3 h-3" />}
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-              </span>
-            </TableCell>
-            <TableCell>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                user.status === 'approved' ? 'bg-green-500/10 text-green-400' :
-                user.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400' :
-                'bg-red-500/10 text-red-400'
-              }`}>
-                {user.status === 'approved' ? <CheckCircle className="w-3 h-3" /> :
-                 user.status === 'pending' ? <Clock className="w-3 h-3" /> :
-                 <XCircle className="w-3 h-3" />}
-                {user.status}
-              </span>
-            </TableCell>
-            <TableCell className="text-muted-foreground text-xs">
-              {user.createdAt ? format(new Date(user.createdAt), "PP") : "N/A"}
-            </TableCell>
-            {showActions && (
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  {user.status === 'pending' && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-green-400 hover:bg-green-400/10"
-                        onClick={() => updateStatusMutation.mutate({ id: user.id, status: "approved" })}
-                      >
-                        Approve
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-red-400 hover:bg-red-400/10"
-                        onClick={() => updateStatusMutation.mutate({ id: user.id, status: "rejected" })}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  <EditUserDialog user={user} />
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-destructive hover:bg-destructive/10"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this user?")) {
-                        deleteMutation.mutate(user.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+    <div className="rounded-xl border border-white/5 overflow-hidden">
+      <Table>
+        <TableHeader className="bg-white/[0.02]">
+          <TableRow className="border-white/5 hover:bg-transparent">
+            <TableHead className="text-muted-foreground font-semibold">User</TableHead>
+            <TableHead className="text-muted-foreground font-semibold">Username</TableHead>
+            <TableHead className="text-muted-foreground font-semibold">Role</TableHead>
+            <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
+            <TableHead className="text-muted-foreground font-semibold">Joining Date</TableHead>
+            {showActions && <TableHead className="text-right text-muted-foreground font-semibold">Actions</TableHead>}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((user) => (
+            <TableRow key={user.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-white/10 shadow-inner">
+                    <UserIcon className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-white">{user.name}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">ID: {user.id}</span>
+                  </div>
                 </div>
               </TableCell>
-            )}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+              <TableCell className="text-muted-foreground">{user.username}</TableCell>
+              <TableCell>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                  user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                  user.role === 'trainer' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                  'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                }`}>
+                  {user.role === 'admin' && <Shield className="w-3.5 h-3.5" />}
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </span>
+              </TableCell>
+              <TableCell>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                  user.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                  user.status === 'pending' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                  'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}>
+                  {user.status === 'approved' ? <CheckCircle className="w-3 h-3" /> :
+                   user.status === 'pending' ? <Clock className="w-3 h-3" /> :
+                   <XCircle className="w-3 h-3" />}
+                  {user.status}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground text-xs font-medium">
+                {user.createdAt ? format(new Date(user.createdAt), "MMM dd, yyyy") : "N/A"}
+              </TableCell>
+              {showActions && (
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    {user.status === 'pending' && (
+                      <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/5">
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 text-emerald-400 hover:bg-emerald-400/10 rounded-md"
+                          onClick={() => updateStatusMutation.mutate({ id: user.id, status: "approved" })}
+                        >
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 text-rose-400 hover:bg-rose-400/10 rounded-md"
+                          onClick={() => updateStatusMutation.mutate({ id: user.id, status: "rejected" })}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex gap-1.5">
+                      <EditUserDialog user={user} />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-9 w-9 text-rose-400 hover:bg-rose-400/10 rounded-lg transition-all active:scale-95"
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this user?")) {
+                            deleteMutation.mutate(user.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold font-display">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage user approvals and system directory</p>
+    <div className="container mx-auto py-10 px-4 space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black font-display tracking-tight text-white flex items-center gap-3">
+            Admin <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Command Center</span>
+          </h1>
+          <p className="text-muted-foreground text-lg">Real-time system oversight and user access governance.</p>
+        </div>
+        <div className="flex gap-4">
+          <Card className="glass-panel border-white/5 py-2 px-6 flex items-center gap-4 bg-gradient-to-br from-white/[0.05] to-transparent">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-2xl font-black text-white">{stats.total}</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Total Users</span>
+            </div>
+          </Card>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
-        <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="bg-white/5 border border-white/10">
-            <TabsTrigger value="pending" className="gap-2">
-              Awaiting Approval <span className="bg-yellow-500/20 text-yellow-400 px-1.5 rounded text-[10px]">{pendingUsers.length}</span>
+      <div className="grid grid-cols-1 gap-10">
+        <Tabs defaultValue="pending" className="w-full space-y-8">
+          <TabsList className="bg-white/5 border border-white/10 p-1.5 h-16 rounded-2xl w-full md:w-auto">
+            <TabsTrigger value="pending" className="rounded-xl h-full px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-3">
+              <Clock className="w-4 h-4" />
+              <span>Awaiting Approval</span>
+              <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[10px] font-bold">{stats.pending}</span>
             </TabsTrigger>
-            <TabsTrigger value="rejected" className="gap-2">
-              Rejected List <span className="bg-red-500/20 text-red-400 px-1.5 rounded text-[10px]">{rejectedUsers.length}</span>
+            <TabsTrigger value="rejected" className="rounded-xl h-full px-8 data-[state=active]:bg-rose-500 data-[state=active]:text-white transition-all gap-3">
+              <XCircle className="w-4 h-4" />
+              <span>Rejected Access</span>
+              <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[10px] font-bold">{stats.rejected}</span>
             </TabsTrigger>
-            <TabsTrigger value="approved">Approved Directory</TabsTrigger>
+            <TabsTrigger value="approved" className="rounded-xl h-full px-8 data-[state=active]:bg-emerald-500 data-[state=active]:text-white transition-all gap-3">
+              <CheckCircle className="w-4 h-4" />
+              <span>Approved Directory</span>
+              <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[10px] font-bold">{stats.approved}</span>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle>Pending Requests</CardTitle>
-                <CardDescription>New trainers and members waiting for system access.</CardDescription>
+          <TabsContent value="pending" className="mt-0 focus-visible:outline-none">
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent">
+              <CardHeader className="p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Pending Requests</CardTitle>
+                    <CardDescription className="text-base mt-1 text-muted-foreground">New accounts requiring verification for system entry.</CardDescription>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                    <ArrowUpRight className="w-6 h-6 text-amber-500" />
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-8 pb-8">
                 {pendingUsers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">No pending approvals found.</div>
+                  <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                      <CheckCircle className="w-10 h-10 text-muted-foreground/30" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">All Caught Up</h3>
+                      <p className="text-muted-foreground max-w-xs">There are no pending user requests at the moment.</p>
+                    </div>
+                  </div>
                 ) : (
                   <UserTable data={pendingUsers} />
                 )}
@@ -199,15 +253,30 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="rejected">
-            <Card className="glass-panel">
-              <CardHeader>
-                <CardTitle>Rejected Applications</CardTitle>
-                <CardDescription>Users who have been denied access to the platform.</CardDescription>
+          <TabsContent value="rejected" className="mt-0 focus-visible:outline-none">
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent">
+              <CardHeader className="p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Rejected Applications</CardTitle>
+                    <CardDescription className="text-base mt-1 text-muted-foreground">Accounts that have been restricted from accessing platform resources.</CardDescription>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                    <XCircle className="w-6 h-6 text-rose-500" />
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-8 pb-8">
                 {rejectedUsers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">No rejected users found.</div>
+                  <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                    <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                      <Shield className="w-10 h-10 text-muted-foreground/30" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">No Rejections</h3>
+                      <p className="text-muted-foreground max-w-xs">The rejected list is currently empty.</p>
+                    </div>
+                  </div>
                 ) : (
                   <UserTable data={rejectedUsers} />
                 )}
@@ -215,22 +284,39 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="approved">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <Card className="glass-panel lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Approved Members & Trainers</CardTitle>
-                  <CardDescription>Directory of all users with active system access.</CardDescription>
+          <TabsContent value="approved" className="mt-0 focus-visible:outline-none">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 items-start">
+              <Card className="glass-panel border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent xl:col-span-3">
+                <CardHeader className="p-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl font-bold">System Directory</CardTitle>
+                      <CardDescription className="text-base mt-1 text-muted-foreground">Certified professionals and members with active credentials.</CardDescription>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                      <Users className="w-6 h-6 text-emerald-500" />
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-8 pb-8">
                   {approvedUsers.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">No approved users found.</div>
+                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                      <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                        <Users className="w-10 h-10 text-muted-foreground/30" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Empty Directory</h3>
+                        <p className="text-muted-foreground max-w-xs">No approved users found in the system records.</p>
+                      </div>
+                    </div>
                   ) : (
                     <UserTable data={approvedUsers} />
                   )}
                 </CardContent>
               </Card>
-              <Leaderboard />
+              <div className="xl:col-span-1 h-full">
+                <Leaderboard />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
