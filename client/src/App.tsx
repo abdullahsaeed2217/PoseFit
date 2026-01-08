@@ -97,6 +97,17 @@ function Router() {
         } />}
       </Route>
 
+      <Route path="/auth">
+        {user ? (
+          <Redirect to={
+            user.role === "admin" ? "/admin-dashboard" : 
+            user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
+          } />
+        ) : (
+          <AuthPage />
+        )}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

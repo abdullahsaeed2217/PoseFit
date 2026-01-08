@@ -65,6 +65,7 @@ export default function AdminDashboard() {
   }
 
   const pendingUsers = users?.filter(u => u.status === "pending") || [];
+  const rejectedUsers = users?.filter(u => u.status === "rejected") || [];
   const approvedUsers = users?.filter(u => u.status === "approved") || [];
 
   const UserTable = ({ data, showActions = true }: { data: User[], showActions?: boolean }) => (
@@ -75,6 +76,7 @@ export default function AdminDashboard() {
           <TableHead>Username</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Joining Date</TableHead>
           {showActions && <TableHead className="text-right">Actions</TableHead>}
         </TableRow>
       </TableHeader>
@@ -111,6 +113,9 @@ export default function AdminDashboard() {
                  <XCircle className="w-3 h-3" />}
                 {user.status}
               </span>
+            </TableCell>
+            <TableCell className="text-muted-foreground text-xs">
+              {user.createdAt ? format(new Date(user.createdAt), "PP") : "N/A"}
             </TableCell>
             {showActions && (
               <TableCell className="text-right">
@@ -161,50 +166,75 @@ export default function AdminDashboard() {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold font-display">Admin Portal</h1>
-          <p className="text-muted-foreground">Manage users and system access approvals</p>
+          <h1 className="text-3xl font-bold font-display">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage user approvals and system directory</p>
         </div>
       </div>
 
-      <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="bg-white/5 border border-white/10">
-          <TabsTrigger value="pending" className="gap-2">
-            Pending <span className="bg-yellow-500/20 text-yellow-400 px-1.5 rounded text-[10px]">{pendingUsers.length}</span>
-          </TabsTrigger>
-          <TabsTrigger value="all">System Users</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 gap-8">
+        <Tabs defaultValue="pending" className="space-y-6">
+          <TabsList className="bg-white/5 border border-white/10">
+            <TabsTrigger value="pending" className="gap-2">
+              Awaiting Approval <span className="bg-yellow-500/20 text-yellow-400 px-1.5 rounded text-[10px]">{pendingUsers.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="gap-2">
+              Rejected List <span className="bg-red-500/20 text-red-400 px-1.5 rounded text-[10px]">{rejectedUsers.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="approved">Approved Directory</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="pending">
-          <Card className="glass-panel">
-            <CardHeader>
-              <CardTitle>Awaiting Approval</CardTitle>
-              <CardDescription>New trainers and members waiting for system access.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {pendingUsers.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">No pending approvals found.</div>
-              ) : (
-                <UserTable data={pendingUsers} />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="all">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="glass-panel lg:col-span-2">
+          <TabsContent value="pending">
+            <Card className="glass-panel">
               <CardHeader>
-                <CardTitle>System Directory</CardTitle>
-                <CardDescription>Full list of all registered users in the platform.</CardDescription>
+                <CardTitle>Pending Requests</CardTitle>
+                <CardDescription>New trainers and members waiting for system access.</CardDescription>
               </CardHeader>
               <CardContent>
-                <UserTable data={users || []} />
+                {pendingUsers.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">No pending approvals found.</div>
+                ) : (
+                  <UserTable data={pendingUsers} />
+                )}
               </CardContent>
             </Card>
-            <Leaderboard />
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+
+          <TabsContent value="rejected">
+            <Card className="glass-panel">
+              <CardHeader>
+                <CardTitle>Rejected Applications</CardTitle>
+                <CardDescription>Users who have been denied access to the platform.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {rejectedUsers.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">No rejected users found.</div>
+                ) : (
+                  <UserTable data={rejectedUsers} />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="approved">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Card className="glass-panel lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Approved Members & Trainers</CardTitle>
+                  <CardDescription>Directory of all users with active system access.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {approvedUsers.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">No approved users found.</div>
+                  ) : (
+                    <UserTable data={approvedUsers} />
+                  )}
+                </CardContent>
+              </Card>
+              <Leaderboard />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
