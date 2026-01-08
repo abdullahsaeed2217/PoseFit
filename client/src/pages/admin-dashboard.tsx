@@ -350,57 +350,60 @@ function EditUserDialog({ user }: { user: User }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Edit2 className="w-4 h-4" />
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg hover:bg-white/5 transition-all active:scale-95">
+          <Edit2 className="w-4 h-4 text-muted-foreground" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-card border-white/10 text-white">
-        <DialogHeader>
-          <DialogTitle>Edit User: {user.username}</DialogTitle>
+      <DialogContent className="bg-[#1a1b26] border-white/10 text-white rounded-2xl shadow-2xl p-8 sm:max-w-md">
+        <DialogHeader className="space-y-3 pb-4">
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Edit2 className="w-5 h-5 text-primary" />
+            Edit Profile
+          </DialogTitle>
+          <CardDescription className="text-muted-foreground">Update user permissions and status for <b>{user.username}</b></CardDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Full Name</Label>
             <Input 
               id="name" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
-              className="bg-background/50 border-white/10"
+              className="bg-white/5 border-white/10 rounded-xl h-11 focus:ring-primary focus:border-primary transition-all"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">System Role</Label>
             <Select value={role} onValueChange={(v: any) => setRole(v)}>
-              <SelectTrigger className="bg-background/50 border-white/10">
+              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 focus:ring-primary focus:border-primary transition-all">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="trainer">Trainer</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+              <SelectContent className="bg-[#1a1b26] border-white/10 text-white rounded-xl">
+                <SelectItem value="member" className="focus:bg-primary/20 focus:text-white rounded-lg">Member</SelectItem>
+                <SelectItem value="trainer" className="focus:bg-primary/20 focus:text-white rounded-lg">Trainer</SelectItem>
+                <SelectItem value="admin" className="focus:bg-primary/20 focus:text-white rounded-lg">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Account Status</Label>
             <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-              <SelectTrigger className="bg-background/50 border-white/10">
+              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 focus:ring-primary focus:border-primary transition-all">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectContent className="bg-[#1a1b26] border-white/10 text-white rounded-xl">
+                <SelectItem value="pending" className="focus:bg-primary/20 focus:text-white rounded-lg">Pending</SelectItem>
+                <SelectItem value="approved" className="focus:bg-primary/20 focus:text-white rounded-lg">Approved</SelectItem>
+                <SelectItem value="rejected" className="focus:bg-primary/20 focus:text-white rounded-lg">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button 
-            className="w-full" 
+            className="w-full btn-primary-gradient h-12 rounded-xl font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all mt-4" 
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
           >
-            {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save Changes
+            {mutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
