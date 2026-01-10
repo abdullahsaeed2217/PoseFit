@@ -15,6 +15,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<"member" | "trainer" | "admin">("member");
@@ -40,7 +41,19 @@ export default function AuthPage() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    register({ username, password, name, role }, {
+    
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    register({ username, email, password, name, role }, {
       onSuccess: (user: any) => {
         if (user.status === "pending") {
           toast({
@@ -149,6 +162,17 @@ export default function AuthPage() {
                       placeholder="johndoe" 
                       value={username} 
                       onChange={(e) => setUsername(e.target.value)}
+                      className="bg-background/50 border-white/10 focus:border-secondary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-email">Email Address</Label>
+                    <Input 
+                      id="reg-email" 
+                      type="email"
+                      placeholder="john@example.com" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)}
                       className="bg-background/50 border-white/10 focus:border-secondary"
                     />
                   </div>

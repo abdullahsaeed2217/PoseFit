@@ -19,6 +19,7 @@ export async function registerRoutes(
       const hashedPassword = await hashPassword("trainer123");
       const trainer = await storage.createUser({
         username: "trainer",
+        email: "trainer@posetofit.com",
         password: hashedPassword,
         role: "trainer",
         name: "John Trainer",
@@ -44,6 +45,7 @@ export async function registerRoutes(
       const hashedPassword = await hashPassword("abdullah1122");
       const admin = await storage.createUser({
         username: "muhammadabdullahsaeed383@gmail.com",
+        email: "muhammadabdullahsaeed383@gmail.com",
         password: hashedPassword,
         role: "admin",
         name: "Muhammad Abdullah Saeed",

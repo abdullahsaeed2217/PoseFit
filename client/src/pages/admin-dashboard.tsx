@@ -85,7 +85,7 @@ export default function AdminDashboard() {
         <TableHeader className="bg-white/[0.02]">
           <TableRow className="border-white/5 hover:bg-transparent">
             <TableHead className="text-muted-foreground font-semibold">User</TableHead>
-            <TableHead className="text-muted-foreground font-semibold">Username</TableHead>
+            <TableHead className="text-muted-foreground font-semibold">Email</TableHead>
             <TableHead className="text-muted-foreground font-semibold">Role</TableHead>
             <TableHead className="text-muted-foreground font-semibold">Status</TableHead>
             <TableHead className="text-muted-foreground font-semibold">Joining Date</TableHead>
@@ -102,11 +102,11 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-white">{user.name}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">ID: {user.id}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">@{user.username}</span>
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="text-muted-foreground">{user.username}</TableCell>
+              <TableCell className="text-muted-foreground lowercase text-xs">{user.email}</TableCell>
               <TableCell>
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
                   user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :

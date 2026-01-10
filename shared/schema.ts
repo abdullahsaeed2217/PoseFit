@@ -5,6 +5,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
   role: text("role", { enum: ["member", "trainer", "admin"] }).notNull().default("member"),
   status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
