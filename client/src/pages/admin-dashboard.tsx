@@ -22,20 +22,56 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { api, buildUrl } from "@shared/routes";
+import { queryClient } from "@/lib/queryClient";
+import { User, Subscription } from "@shared/schema";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock, Users, ArrowUpRight } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock, Users, ArrowUpRight, Calendar, CreditCard } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { useLocation } from "wouter";
 
 import { Leaderboard } from "@/components/leaderboard";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
+  const [location] = useLocation();
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: [api.admin.users.list.path],
   });
+
+  const [activeTab, setActiveTab] = useState("pending");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
@@ -203,8 +239,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-10">
-        <Tabs defaultValue="pending" className="w-full space-y-8">
-          <TabsList className="bg-white/5 border border-white/10 p-1.5 h-16 rounded-2xl w-full md:w-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+          <TabsList className="bg-white/5 border border-white/10 p-1.5 h-16 rounded-2xl w-full flex-wrap md:w-auto">
             <TabsTrigger value="pending" className="rounded-xl h-full px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-3">
               <Clock className="w-4 h-4" />
               <span>Awaiting Approval</span>
@@ -219,6 +255,10 @@ export default function AdminDashboard() {
               <CheckCircle className="w-4 h-4" />
               <span>Approved Directory</span>
               <span className="bg-white/10 text-white px-2 py-0.5 rounded-md text-[10px] font-bold">{stats.approved}</span>
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="rounded-xl h-full px-8 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all gap-3">
+              <CreditCard className="w-4 h-4" />
+              <span>Member Subscriptions</span>
             </TabsTrigger>
           </TabsList>
 
@@ -319,9 +359,96 @@ export default function AdminDashboard() {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="subscriptions" className="mt-0 focus-visible:outline-none">
+            <SubscriptionManager />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function SubscriptionManager() {
+  const [year] = useState(new Date().getFullYear());
+  const { data: subscriptions, isLoading } = useQuery<(Subscription & { user: User })[]>({
+    queryKey: ["/api/admin/subscriptions", year],
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ userId, year, month }: { userId: number, year: number, month: string }) => {
+      await apiRequest("POST", "/api/admin/subscriptions/toggle", { userId, year, month });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions", year] });
+    },
+  });
+
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+  if (isLoading) return <Loader2 className="w-8 h-8 animate-spin mx-auto mt-20" />;
+
+  return (
+    <Card className="glass-panel border-white/5 bg-gradient-to-br from-white/[0.03] to-transparent overflow-hidden">
+      <CardHeader className="p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold">Member Subscriptions</CardTitle>
+            <CardDescription className="text-base mt-1 text-muted-foreground">Manage and track monthly fee submissions for active members ({year})</CardDescription>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+            <Calendar className="w-6 h-6 text-indigo-500" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-0 pb-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-white/[0.02]">
+              <TableRow className="border-white/5">
+                <TableHead className="text-muted-foreground font-semibold px-8 whitespace-nowrap">Member Name</TableHead>
+                <TableHead className="text-muted-foreground font-semibold whitespace-nowrap">Joining Date</TableHead>
+                {months.map(m => (
+                  <TableHead key={m} className="text-center text-muted-foreground font-semibold uppercase text-[10px] tracking-tighter px-2">{m}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptions?.map((sub) => (
+                <TableRow key={sub.user.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <TableCell className="px-8 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-white/10">
+                        <UserIcon className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-semibold text-white">{sub.user.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                    {sub.user.createdAt ? format(new Date(sub.user.createdAt), "MMM d, yyyy") : "N/A"}
+                  </TableCell>
+                  {months.map(m => (
+                    <TableCell key={m} className="text-center px-1">
+                      <button
+                        onClick={() => toggleMutation.mutate({ userId: sub.user.id, year, month: m })}
+                        disabled={toggleMutation.isPending}
+                        className={`w-6 h-6 rounded-md border transition-all flex items-center justify-center mx-auto ${
+                          (sub.months as any)?.[m]
+                            ? "bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-500/20"
+                            : "bg-white/5 border-white/10 hover:border-white/30"
+                        }`}
+                      >
+                        {(sub.months as any)?.[m] && <CheckCircle className="w-3.5 h-3.5" />}
+                      </button>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

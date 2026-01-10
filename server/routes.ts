@@ -182,5 +182,23 @@ export async function registerRoutes(
     res.sendStatus(200);
   });
 
+  app.get("/api/admin/subscriptions/:year", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "admin") return res.sendStatus(403);
+    const year = parseInt(req.params.year);
+    const subs = await storage.getSubscriptions(year);
+    res.json(subs);
+  });
+
+  app.post("/api/admin/subscriptions/toggle", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "admin") return res.sendStatus(403);
+    const { userId, year, month } = req.body;
+    const sub = await storage.toggleSubscription(userId, year, month);
+    res.json(sub);
+  });
+
   return httpServer;
 }

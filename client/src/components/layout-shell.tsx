@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useLogout } from "@/hooks/use-auth";
-import { Dumbbell, Activity, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react";
+import { Dumbbell, Activity, LogOut, User as UserIcon, LayoutDashboard, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function LayoutShell({ children, headerAction }: { children: React.ReactNode, headerAction?: React.ReactNode }) {
@@ -54,6 +54,20 @@ export function LayoutShell({ children, headerAction }: { children: React.ReactN
               Workouts
             </div>
           </Link>
+
+          {user.role === "admin" && (
+            <Link href="/admin-dashboard?tab=subscriptions">
+              <div className={`
+                flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
+                ${location.includes("tab=subscriptions")
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"}
+              `}>
+                <CreditCard className="w-5 h-5" />
+                Subscriptions
+              </div>
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t border-white/5">

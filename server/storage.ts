@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, notifications, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification } from "@shared/schema";
+import { users, workouts, sessions, achievements, notifications, subscriptions, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -31,6 +31,10 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUser(id: number, updates: Partial<InsertUser | { status: string, totalPoints: number }>): Promise<User>;
   deleteUser(id: number): Promise<void>;
+
+  // Subscriptions
+  getSubscriptions(year: number): Promise<(Subscription & { user: User })[]>;
+  toggleSubscription(userId: number, year: number, month: string): Promise<Subscription>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -146,6 +150,54 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getSubscriptions(year: number): Promise<(Subscription & { user: User })[]> {
+    const approvedUsers = await db.select().from(users).where(and(eq(users.role, "member"), eq(users.status, "approved")));
+    const userIds = approvedUsers.map(u => u.id);
+    
+    if (userIds.length === 0) return [];
+
+    const subs = await db.select().from(subscriptions).where(and(eq(subscriptions.year, year)));
+    
+    return approvedUsers.map(user => {
+      const sub = subs.find(s => s.userId === user.id) || {
+        id: 0,
+        userId: user.id,
+        year,
+        months: {
+          jan: false, feb: false, mar: false, apr: false,
+          may: false, jun: false, jul: false, aug: false,
+          sep: false, oct: false, nov: false, dec: false
+        },
+        updatedAt: new Date()
+      };
+      return { ...sub, user };
+    });
+  }
+
+  async toggleSubscription(userId: number, year: number, month: string): Promise<Subscription> {
+    const [existing] = await db.select().from(subscriptions).where(and(eq(subscriptions.userId, userId), eq(subscriptions.year, year)));
+    
+    if (existing) {
+      const months = { ...(existing.months as any), [month]: !existing.months[month] };
+      const [updated] = await db.update(subscriptions)
+        .set({ months, updatedAt: new Date() })
+        .where(eq(subscriptions.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const months = {
+        jan: false, feb: false, mar: false, apr: false,
+        may: false, jun: false, jul: false, aug: false,
+        sep: false, oct: false, nov: false, dec: false,
+        [month]: true
+      };
+      const [inserted] = await db.insert(subscriptions)
+        .values({ userId, year, months })
+        .returning();
+      return inserted;
+    }
   }
 }
 
