@@ -64,7 +64,7 @@ export function LayoutShell({ children, headerAction }: { children: React.ReactN
                   : "text-muted-foreground hover:bg-white/5 hover:text-white"}
               `}>
                 <CreditCard className="w-5 h-5" />
-                Subscriptions
+                Member Subscription
               </div>
             </Link>
           )}

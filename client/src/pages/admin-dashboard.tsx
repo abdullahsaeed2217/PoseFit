@@ -234,7 +234,7 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="rounded-xl h-full px-8 data-[state=active]:bg-indigo-500 data-[state=active]:text-white transition-all gap-3">
               <CreditCard className="w-4 h-4" />
-              <span>Member Subscriptions</span>
+              <span>Member Subscription</span>
             </TabsTrigger>
           </TabsList>
 
