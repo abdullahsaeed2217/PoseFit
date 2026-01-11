@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, notifications, subscriptions, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription } from "@shared/schema";
+import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription, type AiPostureAnalysis, type InsertAiPostureAnalysis } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -32,9 +32,9 @@ export interface IStorage {
   updateUser(id: number, updates: Partial<InsertUser | { status: string, totalPoints: number }>): Promise<User>;
   deleteUser(id: number): Promise<void>;
 
-  // Subscriptions
-  getSubscriptions(year: number): Promise<(Subscription & { user: User })[]>;
-  toggleSubscription(userId: number, year: number, month: string): Promise<Subscription>;
+  // AI Posture Analysis
+  createAiPostureAnalysis(analysis: InsertAiPostureAnalysis): Promise<AiPostureAnalysis>;
+  getAiPostureAnalysis(userId: number): Promise<AiPostureAnalysis[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -199,6 +199,15 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return inserted;
     }
+  }
+
+  async createAiPostureAnalysis(analysis: InsertAiPostureAnalysis): Promise<AiPostureAnalysis> {
+    const [result] = await db.insert(aiPostureAnalysis).values(analysis).returning();
+    return result;
+  }
+
+  async getAiPostureAnalysis(userId: number): Promise<AiPostureAnalysis[]> {
+    return await db.select().from(aiPostureAnalysis).where(eq(aiPostureAnalysis.userId, userId)).orderBy(desc(aiPostureAnalysis.createdAt));
   }
 }
 

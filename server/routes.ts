@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import { registerAiRoutes } from "./ai-routes";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { hashPassword } from "./auth";
@@ -11,6 +12,7 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   setupAuth(app);
+  registerAiRoutes(app);
 
   // SEED DATA
   if (app.get("env") === "development") {

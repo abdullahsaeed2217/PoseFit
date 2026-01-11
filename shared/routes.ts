@@ -163,6 +163,24 @@ export const api = {
       },
     },
   },
+  ai: {
+    analyzePosture: {
+      method: "POST" as const,
+      path: "/api/ai/analyze-posture",
+      input: z.object({
+        image: z.string(), // base64 image
+        workoutName: z.string().optional(),
+      }),
+      responses: {
+        200: z.object({
+          analysis: z.string(),
+          postureScore: z.number(),
+          feedback: z.string(),
+        }),
+        400: z.object({ message: z.string() }),
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
