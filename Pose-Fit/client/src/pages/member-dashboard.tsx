@@ -1,0 +1,209 @@
+import { useState } from "react";
+import { useWorkouts, useSessions } from "@/hooks/use-workouts";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Play, TrendingUp, Clock, ChevronRight, Activity, Star, CheckCircle2 } from "lucide-react";
+import { Link } from "wouter";
+import { useUser } from "@/hooks/use-auth";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Leaderboard } from "@/components/leaderboard";
+import { WorkoutSummary } from "@/components/workout-summary";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Session } from "@shared/schema";
+import { ReportingAnalytics } from "@/components/reporting-analytics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export default function MemberDashboard() {
+  const { data: user } = useUser();
+  const { data: workouts, isLoading: loadingWorkouts } = useWorkouts();
+  const { data: sessions, isLoading: loadingSessions } = useSessions();
+
+  if (loadingWorkouts || loadingSessions) {
+    return (
+      <div className="h-[50vh] flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+            <TrendingUp className="w-6 h-6 text-primary animate-bounce" />
+          </div>
+          <p className="text-muted-foreground font-medium">Loading your stats...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate simple stats
+  const totalSessions = sessions?.length || 0;
+  const totalDuration = sessions?.reduce((acc, curr) => acc + (curr.duration || 0), 0) || 0;
+  const avgScore = totalSessions > 0 
+    ? Math.round((sessions?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0) / totalSessions) 
+    : 0;
+
+  // Recent activity data for chart
+  const chartData = sessions?.slice(0, 7).map((s, i) => ({
+    name: `Session ${i + 1}`,
+    score: s.score || 0,
+  }));
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
+            Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{user?.name}</span>
+          </h1>
+          <p className="text-muted-foreground text-lg">Ready to crush your goals today?</p>
+        </div>
+        <Link href="/workouts">
+          <Button className="btn-primary-gradient px-8 py-6 rounded-xl text-lg group">
+            Find a Workout <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Link>
+      </div>
+
+      <Tabs defaultValue="overview" className="space-y-8">
+        <TabsList className="bg-white/5 border border-white/10 p-1">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Reporting & Analytics</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Points</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{user?.totalPoints || 0}</span>
+                  <span className="text-sm text-yellow-400 font-medium flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-yellow-400" /> XP
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-secondary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Minutes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{Math.round(totalDuration / 60)}</span>
+                  <span className="text-sm text-muted-foreground">mins</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-indigo-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Avg Form Score</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white">{avgScore}%</span>
+                </div>
+                {/* Simple progress bar */}
+                <div className="h-2 w-full bg-white/10 rounded-full mt-3 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" 
+                    style={{ width: `${avgScore}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Recent Activity Section */}
+            <div className="lg:col-span-2 space-y-12">
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Recent History</h2>
+                  <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1">
+                    Start New <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  {sessions?.length === 0 ? (
+                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                      <p className="text-muted-foreground">No recent activity. Start your first workout!</p>
+                      <Link href="/workouts" className="mt-4 inline-block">
+                        <Button variant="outline" size="sm">Explore Workouts</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    sessions?.slice(0, 5).map((session) => (
+                      <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
+                        <CardContent className="p-6 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                              <CheckCircle2 className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-8">
+                            <div className="text-right">
+                              <div className="text-sm font-bold">{session.score}%</div>
+                              <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
+                            </div>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
+                                <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </section>
+            </div>
+
+            {/* Leaderboard Section */}
+            <div className="space-y-6">
+              <Leaderboard />
+              
+              <Card className="glass-panel border-white/5 h-[400px]">
+                <CardHeader>
+                  <CardTitle className="text-lg">Recent Form Scores</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <XAxis dataKey="name" hide />
+                      <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                        contentStyle={{ backgroundColor: '#1a1b26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      />
+                      <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                        {chartData?.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(263, 85%, 60%)' : 'hsl(172, 66%, 50%)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <ReportingAnalytics />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
