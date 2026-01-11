@@ -180,7 +180,8 @@ export class DatabaseStorage implements IStorage {
     const [existing] = await db.select().from(subscriptions).where(and(eq(subscriptions.userId, userId), eq(subscriptions.year, year)));
     
     if (existing) {
-      const months = { ...(existing.months as any), [month]: !existing.months[month] };
+      const currentMonths = (existing.months as Record<string, boolean>) || {};
+      const months = { ...currentMonths, [month]: !currentMonths[month] };
       const [updated] = await db.update(subscriptions)
         .set({ months, updatedAt: new Date() })
         .where(eq(subscriptions.id, existing.id))
