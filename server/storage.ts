@@ -1,5 +1,7 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, privateMessages, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type AiPostureAnalysis, type InsertAiPostureAnalysis, type PrivateMessage, type InsertPrivateMessage, type Subscription } from "@shared/schema";
+import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, privateMessages, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type AiPostureAnalysis, type InsertAiPostureAnalysis, type PrivateMessage, type InsertPrivateMessage } from "@shared/schema";
+
+export type Subscription = typeof subscriptions.$inferSelect;
 import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
