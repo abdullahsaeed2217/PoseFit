@@ -84,6 +84,20 @@ export function LayoutShell({ children, headerAction }: { children: React.ReactN
           )}
 
           {user.role === "admin" && (
+            <Link href="/admin-dashboard?tab=subscriptions">
+              <div className={`
+                flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
+                ${location.includes("tab=subscriptions")
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"}
+              `}>
+                <CreditCard className="w-5 h-5" />
+                Member Subscription
+              </div>
+            </Link>
+          )}
+
+          {user.role === "admin" && (
             <Link href="/admin-dashboard?tab=chat">
               <div className={`
                 flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
@@ -107,20 +121,6 @@ export function LayoutShell({ children, headerAction }: { children: React.ReactN
               `}>
                 <MessageSquare className="w-5 h-5" />
                 Chat
-              </div>
-            </Link>
-          )}
-
-          {user.role === "admin" && (
-            <Link href="/admin-dashboard?tab=subscriptions">
-              <div className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
-                ${location.includes("tab=subscriptions")
-                  ? "bg-primary/10 text-primary border border-primary/20" 
-                  : "text-muted-foreground hover:bg-white/5 hover:text-white"}
-              `}>
-                <CreditCard className="w-5 h-5" />
-                Member Subscription
               </div>
             </Link>
           )}

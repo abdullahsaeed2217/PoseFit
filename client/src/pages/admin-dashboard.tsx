@@ -90,7 +90,7 @@ export default function AdminDashboard() {
 
   const pendingUsers = users?.filter(u => u.status === "pending") || [];
   const rejectedUsers = users?.filter(u => u.status === "rejected") || [];
-  const approvedUsers = users?.filter(u => u.status === "approved") || [];
+  const approvedUsers = users?.filter(u => u.status === "approved" && u.role === "member") || [];
 
   const UserTable = ({ data, showActions = true }: { data: User[], showActions?: boolean }) => (
     <div className="rounded-xl border border-white/5 overflow-hidden">
