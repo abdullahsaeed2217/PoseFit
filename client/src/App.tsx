@@ -14,6 +14,7 @@ import TrainerDashboard from "@/pages/trainer-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
 import WorkoutsPage from "@/pages/workouts";
+import WorkoutTracking from "@/pages/workout-tracking";
 import AiPostureDetector from "@/pages/ai-posture-detector";
 import ChatPage from "@/pages/chat";
 import NotFound from "@/pages/not-found";
@@ -75,6 +76,12 @@ function Router() {
       <Route path="/workout/:id">
         <LayoutShell headerAction={<NotificationBell />}>
           <WorkoutSession />
+        </LayoutShell>
+      </Route>
+
+      <Route path="/workout-tracking">
+        <LayoutShell headerAction={<NotificationBell />}>
+          <WorkoutTracking />
         </LayoutShell>
       </Route>
 

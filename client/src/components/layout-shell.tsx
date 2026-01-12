@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useUser, useLogout } from "@/hooks/use-auth";
-import { Dumbbell, Activity, LogOut, User as UserIcon, LayoutDashboard, CreditCard, ScanLine, MessageSquare } from "lucide-react";
+import { Dumbbell, Activity, LogOut, User as UserIcon, LayoutDashboard, CreditCard, ScanLine, MessageSquare, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function LayoutShell({ children, headerAction }: { children: React.ReactNode, headerAction?: React.ReactNode }) {
@@ -54,6 +54,20 @@ export function LayoutShell({ children, headerAction }: { children: React.ReactN
               Workouts
             </div>
           </Link>
+
+          {user.role === "member" && (
+            <Link href="/workout-tracking">
+              <div className={`
+                flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
+                ${location === "/workout-tracking" 
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"}
+              `}>
+                <Timer className="w-5 h-5" />
+                Workout Tracking
+              </div>
+            </Link>
+          )}
 
           {user.role === "member" && (
             <Link href="/ai-posture">
