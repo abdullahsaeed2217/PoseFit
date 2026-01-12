@@ -41,9 +41,8 @@ export function registerAiRoutes(app: Express) {
       const result = JSON.parse(response.choices[0].message.content || "{}");
       
       // Save analysis to storage
-      // @ts-ignore
       await storage.createAiPostureAnalysis({
-        userId: req.user.id,
+        userId: (req.user as any).id,
         analysis: result.analysis || "Analysis complete",
         postureScore: result.postureScore || 80,
         feedback: result.feedback || "Good job, keep it up!",
