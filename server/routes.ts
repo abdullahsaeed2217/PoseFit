@@ -14,6 +14,33 @@ export async function registerRoutes(
   setupAuth(app);
   registerAiRoutes(app);
 
+  app.get("/api/messages/:otherUserId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const messages = await storage.getPrivateMessages(req.user!.id, parseInt(req.params.otherUserId));
+    res.json(messages);
+  });
+
+  app.post("/api/messages", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { receiverId, content } = req.body;
+    const message = await storage.createPrivateMessage({
+      senderId: req.user!.id,
+      receiverId,
+      content
+    });
+
+    // Create notification
+    await storage.createNotification({
+      userId: receiverId,
+      type: "chat",
+      title: "New Message",
+      message: `You received a new message from ${req.user!.username}`,
+      read: false
+    });
+
+    res.status(201).json(message);
+  });
+
   // SEED DATA
   if (app.get("env") === "development") {
     const existingTrainer = await storage.getUserByUsername("trainer");

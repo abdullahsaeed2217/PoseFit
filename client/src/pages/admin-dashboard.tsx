@@ -24,15 +24,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock, Users, ArrowUpRight, Calendar, CreditCard } from "lucide-react";
+import { Loader2, Trash2, Edit2, Shield, User as UserIcon, CheckCircle, XCircle, Clock, Users, ArrowUpRight, Calendar, CreditCard, MessageSquare } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 
-import { Leaderboard } from "@/components/leaderboard";
+import SubscriptionsTab from "@/components/admin/subscriptions-tab";
+import ChatPage from "@/pages/chat";
 
-export default function AdminDashboard() {
   const { toast } = useToast();
   const [location] = useLocation();
   const { data: users, isLoading } = useQuery<User[]>({
@@ -236,6 +236,10 @@ export default function AdminDashboard() {
               <CreditCard className="w-4 h-4" />
               <span>Member Subscription</span>
             </TabsTrigger>
+            <TabsTrigger value="chat" className="rounded-xl h-full px-8 data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-3">
+              <MessageSquare className="w-4 h-4" />
+              <span>Chat</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending" className="mt-0 focus-visible:outline-none">
@@ -338,6 +342,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="subscriptions" className="mt-0 focus-visible:outline-none">
             <SubscriptionManager />
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-0 focus-visible:outline-none">
+            <ChatPage />
           </TabsContent>
         </Tabs>
       </div>

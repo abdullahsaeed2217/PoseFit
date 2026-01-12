@@ -15,6 +15,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import WorkoutSession from "@/pages/workout-session";
 import WorkoutsPage from "@/pages/workouts";
 import AiPostureDetector from "@/pages/ai-posture-detector";
+import ChatPage from "@/pages/chat";
 import NotFound from "@/pages/not-found";
 
 import { NotificationBell } from "@/components/notifications";
@@ -80,6 +81,12 @@ function Router() {
       <Route path="/ai-posture">
         <LayoutShell headerAction={<NotificationBell />}>
           <AiPostureDetector />
+        </LayoutShell>
+      </Route>
+
+      <Route path="/chat">
+        <LayoutShell headerAction={<NotificationBell />}>
+          <ChatPage />
         </LayoutShell>
       </Route>
 

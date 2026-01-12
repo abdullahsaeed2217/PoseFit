@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription, type AiPostureAnalysis, type InsertAiPostureAnalysis } from "@shared/schema";
+import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, privateMessages, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription, type AiPostureAnalysis, type InsertAiPostureAnalysis, type PrivateMessage, type InsertPrivateMessage } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -35,6 +35,10 @@ export interface IStorage {
   // AI Posture Analysis
   createAiPostureAnalysis(analysis: InsertAiPostureAnalysis): Promise<AiPostureAnalysis>;
   getAiPostureAnalysis(userId: number): Promise<AiPostureAnalysis[]>;
+
+  // Private Messages
+  createPrivateMessage(message: InsertPrivateMessage): Promise<PrivateMessage>;
+  getPrivateMessages(userA: number, userB: number): Promise<PrivateMessage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -208,6 +212,21 @@ export class DatabaseStorage implements IStorage {
 
   async getAiPostureAnalysis(userId: number): Promise<AiPostureAnalysis[]> {
     return await db.select().from(aiPostureAnalysis).where(eq(aiPostureAnalysis.userId, userId)).orderBy(desc(aiPostureAnalysis.createdAt));
+  }
+
+  async createPrivateMessage(message: InsertPrivateMessage): Promise<PrivateMessage> {
+    const [result] = await db.insert(privateMessages).values(message).returning();
+    return result;
+  }
+
+  async getPrivateMessages(userA: number, userB: number): Promise<PrivateMessage[]> {
+    return await db.select()
+      .from(privateMessages)
+      .where(
+        sql`(${privateMessages.senderId} = ${userA} AND ${privateMessages.receiverId} = ${userB}) OR 
+            (${privateMessages.senderId} = ${userB} AND ${privateMessages.receiverId} = ${userA})`
+      )
+      .orderBy(privateMessages.createdAt);
   }
 }
 
