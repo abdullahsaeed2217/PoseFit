@@ -14,6 +14,53 @@ export async function registerRoutes(
   setupAuth(app);
   registerAiRoutes(app);
 
+  // Automated Subscription Expiry Notification
+  const checkSubscriptionExpiry = async () => {
+    const allUsers = await storage.getAllUsers();
+    const now = new Date();
+    
+    for (const user of allUsers) {
+      if (user.role === "member" && user.status === "approved" && user.createdAt) {
+        const joiningDate = new Date(user.createdAt);
+        const monthsDiff = (now.getFullYear() - joiningDate.getFullYear()) * 12 + now.getMonth() - joiningDate.getMonth();
+        
+        // If they have been a member for at least one month
+        if (monthsDiff >= 1) {
+          const currentYear = now.getFullYear();
+          const currentMonthName = now.toLocaleString('default', { month: 'short' }).toLowerCase();
+          const subs = await storage.getSubscriptions(currentYear);
+          const userSub = subs.find(s => s.userId === user.id);
+          
+          // Check if subscription for current month is NOT marked as paid
+          if (!userSub || !(userSub.months as any)?.[currentMonthName]) {
+            // Check if we already sent an expiry notification today
+            const notifications = await storage.getNotifications(user.id);
+            const todayNotification = notifications.find(n => 
+              n.type === "warning" && 
+              n.title === "Subscription Expired" &&
+              new Date(n.createdAt!).toDateString() === now.toDateString()
+            );
+
+            if (!todayNotification) {
+              await storage.createNotification({
+                userId: user.id,
+                title: "Subscription Expired",
+                message: "Your Monthly Subscription is Expired Plz Update Your Subscription",
+                type: "warning",
+                read: false
+              });
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Run on startup
+  checkSubscriptionExpiry();
+  // Check every 24 hours
+  setInterval(checkSubscriptionExpiry, 24 * 60 * 60 * 1000);
+
   app.get("/api/messages/:otherUserId", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const messages = await storage.getPrivateMessages((req.user as any).id, parseInt(req.params.otherUserId));
