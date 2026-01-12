@@ -21,17 +21,17 @@ export default function ChatPage({ targetUserId }: { targetUserId?: number }) {
     enabled: currentUser?.role === "admin",
   });
 
-  const { data: adminUser } = useQuery<UserType>({
+  const { data: allUsers } = useQuery<UserType[]>({
     queryKey: ["/api/admin/users"],
-    select: (data) => data.find(u => u.role === 'admin') as UserType,
     enabled: currentUser?.role === "member",
   });
 
   useEffect(() => {
-    if (currentUser?.role === "member" && adminUser) {
-      setSelectedUser(adminUser);
+    if (currentUser?.role === "member" && allUsers) {
+      const admin = allUsers.find(u => u.role === 'admin');
+      if (admin) setSelectedUser(admin);
     }
-  }, [currentUser, adminUser]);
+  }, [currentUser, allUsers]);
 
   useEffect(() => {
     if (targetUserId && users) {
@@ -61,7 +61,10 @@ export default function ChatPage({ targetUserId }: { targetUserId?: number }) {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -152,13 +155,14 @@ export default function ChatPage({ targetUserId }: { targetUserId?: number }) {
                   {sendMessageMutation.isPending ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              Select a member to start chatting
-            </div>
-          )}
-        </Card>
-      </div>
+            </CardContent>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            {currentUser?.role === 'admin' ? 'Select a member to start chatting' : 'Connecting to admin...'}
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }

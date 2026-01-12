@@ -16,7 +16,7 @@ export async function registerRoutes(
 
   app.get("/api/messages/:otherUserId", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const messages = await storage.getPrivateMessages(req.user!.id, parseInt(req.params.otherUserId));
+    const messages = await storage.getPrivateMessages((req.user as any).id, parseInt(req.params.otherUserId));
     res.json(messages);
   });
 
@@ -24,7 +24,7 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { receiverId, content } = req.body;
     const message = await storage.createPrivateMessage({
-      senderId: req.user!.id,
+      senderId: (req.user as any).id,
       receiverId,
       content
     });
@@ -34,7 +34,7 @@ export async function registerRoutes(
       userId: receiverId,
       type: "chat",
       title: "New Message",
-      message: `You received a new message from ${req.user!.username}`,
+      message: `You received a new message from ${(req.user as any).username}`,
       read: false
     });
 

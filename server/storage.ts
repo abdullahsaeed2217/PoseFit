@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, privateMessages, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type Subscription, type InsertSubscription, type AiPostureAnalysis, type InsertAiPostureAnalysis, type PrivateMessage, type InsertPrivateMessage } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { users, workouts, sessions, achievements, notifications, subscriptions, aiPostureAnalysis, privateMessages, type User, type InsertUser, type Workout, type InsertWorkout, type Session, type InsertSession, type Achievement, type InsertAchievement, type Notification, type InsertNotification, type AiPostureAnalysis, type InsertAiPostureAnalysis, type PrivateMessage, type InsertPrivateMessage } from "@shared/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;

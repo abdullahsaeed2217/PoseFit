@@ -1,6 +1,6 @@
 import { api, buildUrl } from "@shared/routes";
 import { queryClient } from "@/lib/queryClient";
-import { User, Subscription } from "@shared/schema";
+import { User } from "@shared/schema";
 import { 
   Table, 
   TableBody, 
@@ -30,9 +30,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useLocation } from "wouter";
 
-import SubscriptionsTab from "@/components/admin/subscriptions-tab";
 import ChatPage from "@/pages/chat";
+import { Leaderboard } from "@/components/leaderboard";
 
+export default function AdminDashboard() {
   const { toast } = useToast();
   const [location] = useLocation();
   const { data: users, isLoading } = useQuery<User[]>({
@@ -355,7 +356,7 @@ import ChatPage from "@/pages/chat";
 
 function SubscriptionManager() {
   const [year] = useState(new Date().getFullYear());
-  const { data: subscriptions, isLoading } = useQuery<(Subscription & { user: User })[]>({
+  const { data: subscriptions, isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/subscriptions", year],
   });
 
@@ -486,35 +487,35 @@ function EditUserDialog({ user }: { user: User }) {
           <div className="space-y-2">
             <Label htmlFor="role" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">System Role</Label>
             <Select value={role} onValueChange={(v: any) => setRole(v)}>
-              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 focus:ring-primary focus:border-primary transition-all">
-                <SelectValue placeholder="Select role" />
+              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11">
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a1b26] border-white/10 text-white rounded-xl">
-                <SelectItem value="member" className="focus:bg-primary/20 focus:text-white rounded-lg">Member</SelectItem>
-                <SelectItem value="trainer" className="focus:bg-primary/20 focus:text-white rounded-lg">Trainer</SelectItem>
-                <SelectItem value="admin" className="focus:bg-primary/20 focus:text-white rounded-lg">Admin</SelectItem>
+              <SelectContent className="bg-[#1a1b26] border-white/10 text-white">
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="trainer">Trainer</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="status" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Account Status</Label>
+            <Label htmlFor="status" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</Label>
             <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11 focus:ring-primary focus:border-primary transition-all">
-                <SelectValue placeholder="Select status" />
+              <SelectTrigger className="bg-white/5 border-white/10 rounded-xl h-11">
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a1b26] border-white/10 text-white rounded-xl">
-                <SelectItem value="pending" className="focus:bg-primary/20 focus:text-white rounded-lg">Pending</SelectItem>
-                <SelectItem value="approved" className="focus:bg-primary/20 focus:text-white rounded-lg">Approved</SelectItem>
-                <SelectItem value="rejected" className="focus:bg-primary/20 focus:text-white rounded-lg">Rejected</SelectItem>
+              <SelectContent className="bg-[#1a1b26] border-white/10 text-white">
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button 
-            className="w-full btn-primary-gradient h-12 rounded-xl font-bold text-lg shadow-lg shadow-primary/20 active:scale-[0.98] transition-all mt-4" 
+            className="w-full h-12 rounded-xl font-bold text-base mt-4" 
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "Save Changes"}
+            {mutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
