@@ -1,7 +1,7 @@
 import { Express } from "express";
 import OpenAI from "openai";
 import { api } from "@shared/routes";
-import { storage } from "../storage";
+import { storage } from "./storage";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
