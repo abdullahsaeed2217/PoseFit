@@ -24,6 +24,7 @@ export default function AiPostureDetector() {
   const analyzePosture = async () => {
     if (!imgSrc) return;
     setIsAnalyzing(true);
+    setResult(null); // Clear previous result
     try {
       const res = await apiRequest("POST", "/api/ai/analyze-posture", {
         image: imgSrc,
