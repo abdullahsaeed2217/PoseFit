@@ -47,10 +47,6 @@ export function setupAuth(app: Express) {
         const user = await storage.getUserByUsername(username);
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false);
-        } else if (user.status === "pending") {
-          return done(null, false, { message: "Your account is pending admin approval." });
-        } else if (user.status === "rejected") {
-          return done(null, false, { message: "Your account has been rejected." });
         } else {
           return done(null, user);
         }
@@ -61,9 +57,9 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => done(null, (user as User).id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: any, done) => {
     try {
-      const user = await storage.getUser(id);
+      const user = await storage.getUser(Number(id));
       done(null, user);
     } catch (err) {
       done(err);
@@ -83,14 +79,7 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
       });
 
-      req.login(user, (err) => {
-        if (err) return next(err);
-        // Don't send the user object if they are pending, instead send a status indicating they need approval
-        if (user.status === "pending") {
-          return res.status(201).json({ ...user, status: "pending", message: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours." });
-        }
-        res.status(201).json(user);
-      });
+      res.status(201).json({ ...user, message: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours." });
     } catch (err) {
       next(err);
     }

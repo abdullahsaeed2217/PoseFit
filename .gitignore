@@ -1,6 +1,13 @@
 node_modules
 dist
 .DS_Store
-server/public
-vite.config.ts.*
+.env
+.env.local
+*.zip
 *.tar.gz
+scratch/
+__pycache__/
+*.pyc
+.venv/
+test_api*.js
+test_api*.py

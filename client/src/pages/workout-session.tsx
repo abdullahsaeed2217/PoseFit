@@ -60,6 +60,9 @@ export default function WorkoutSession() {
   const [feedback, setFeedback] = useState("Get Ready...");
   const [timer, setTimer] = useState(0);
   const [score, setScore] = useState(0);
+  const [sequenceBuffer, setSequenceBuffer] = useState<number[][]>([]);
+  const [hfUrl, setHfUrl] = useState("https://muhammadzakariyyausmani-fitness-ai-api.hf.space");
+  const [aiStatus, setAiStatus] = useState("Initializing...");
 
   // Initialize TF.js and Model
   useEffect(() => {
@@ -68,8 +71,11 @@ export default function WorkoutSession() {
       try {
         await tf.ready();
         const detector = await poseDetection.createDetector(
-          poseDetection.SupportedModels.MoveNet,
-          { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+          poseDetection.SupportedModels.BlazePose,
+          { 
+            runtime: 'tfjs',
+            modelType: 'lite'
+          }
         );
         if (active) setModel(detector);
       } catch (err) {
@@ -88,7 +94,6 @@ export default function WorkoutSession() {
       if (model && webcamRef.current && webcamRef.current.video && canvasRef.current) {
         const video = webcamRef.current.video;
         
-        // Ensure video is ready
         if (video.readyState === 4) {
           const videoWidth = video.videoWidth;
           const videoHeight = video.videoHeight;
@@ -104,20 +109,15 @@ export default function WorkoutSession() {
             if (poses.length > 0) {
               drawSkeleton(poses[0].keypoints, ctx);
               
-              // Simple feedback logic demo (e.g., check squat depth)
-              // Keypoints: 11 (left hip), 13 (left knee), 15 (left ankle)
+              // 1. Extract Landmarks for the Buffer
               const kp = poses[0].keypoints;
-              const hip = kp[11];
-              const knee = kp[13];
+              const currentFrameLandmarks = kp.flatMap(p => [p.x / videoWidth, p.y / videoHeight, p.z || 0, p.score || 1]);
               
-              if (hip.score! > 0.5 && knee.score! > 0.5) {
-                if (hip.y > knee.y - 20) { // Simple squat depth check
-                  setFeedback("Great Depth! Keep going!");
-                  if (isRecording) setScore(s => Math.min(s + 0.5, 100)); // Increment score slowly
-                } else {
-                  setFeedback("Go Lower!");
-                }
-              }
+              // 2. Update Buffer (Keep last 30 frames)
+              setSequenceBuffer(prev => {
+                const newBuffer = [...prev, currentFrameLandmarks];
+                return newBuffer.slice(-30);
+              });
             }
           }
         }
@@ -130,7 +130,51 @@ export default function WorkoutSession() {
     }
 
     return () => cancelAnimationFrame(animationFrameId);
-  }, [model, isRecording]);
+  }, [model]);
+
+  // AI Prediction Loop (Every 1 second)
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording && sequenceBuffer.length === 30 && hfUrl) {
+      interval = setInterval(async () => {
+        try {
+          const response = await fetch(`${hfUrl}/run/predict`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              data: [sequenceBuffer]
+            })
+          });
+          
+          if (!response.ok) {
+            setAiStatus("AI System Busy...");
+            return;
+          }
+
+          const data = await response.json();
+          const result = data.data[0];
+          
+          if (result && result.exercise) {
+            setAiStatus("AI Online");
+            setFeedback(`Detected: ${result.exercise.toUpperCase()} (${result.confidence}%)`);
+            if (result.confidence > 80) {
+              setScore(s => Math.min(s + 1, 100));
+            }
+          } else if (result && result.error) {
+            setAiStatus("AI Error: " + result.error);
+          }
+        } catch (error) {
+          console.error("AI Prediction Error:", error);
+          setAiStatus("AI Offline - Reconnecting...");
+        }
+      }, 1000);
+    } else if (sequenceBuffer.length < 30) {
+      setAiStatus("Calibrating Pose...");
+    } else {
+      setAiStatus("Ready to Start");
+    }
+    return () => clearInterval(interval);
+  }, [isRecording, sequenceBuffer, hfUrl]);
 
   // Timer
   useEffect(() => {
@@ -174,7 +218,7 @@ export default function WorkoutSession() {
     <div className="flex flex-col h-full gap-4 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => setLocation("/member-dashboard")} className="hover:bg-white/10">
+        <Button variant="ghost" onClick={() => setLocation("/member-dashboard")} className="hover:bg-accent">
           <ChevronLeft className="w-5 h-5 mr-2" /> Back
         </Button>
         <div className="text-center">
@@ -189,7 +233,23 @@ export default function WorkoutSession() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[70vh]">
         {/* Webcam Area */}
-        <div className="lg:col-span-2 relative bg-black rounded-2xl overflow-hidden shadow-2xl shadow-black border border-white/10">
+        <div className="lg:col-span-2 relative bg-black rounded-2xl overflow-hidden shadow-2xl shadow-black border border-border">
+          {/* AI Status Badge */}
+          <div className="absolute top-4 left-4 z-20">
+            <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 ${
+              aiStatus === "AI Online" ? "bg-green-500/20 text-green-400 border border-green-500/30" : 
+              aiStatus.includes("Offline") ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+              "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+            }`}>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${
+                aiStatus === "AI Online" ? "bg-green-400" : 
+                aiStatus.includes("Offline") ? "bg-red-400" : 
+                "bg-blue-400"
+              }`} />
+              {aiStatus}
+            </div>
+          </div>
+
           <Webcam
             ref={webcamRef}
             className="absolute inset-0 w-full h-full object-cover mirror-x"
@@ -201,7 +261,7 @@ export default function WorkoutSession() {
           />
           
           {/* Overlay Stats */}
-          <div className="absolute top-4 left-4 bg-black/50 backdrop-blur px-4 py-2 rounded-lg border border-white/10">
+          <div className="absolute top-4 left-4 bg-background/50 backdrop-blur px-4 py-2 rounded-lg border border-border">
             <span className={`font-bold ${
               feedback.includes("Great") ? "text-green-400" : "text-yellow-400"
             }`}>
@@ -232,12 +292,12 @@ export default function WorkoutSession() {
         </div>
 
         {/* Sidebar Info */}
-        <Card className="glass-panel border-white/5 flex flex-col h-full">
-          <div className="p-6 border-b border-white/10">
+        <Card className="bg-card border-border flex flex-col h-full">
+          <div className="p-6 border-b border-border">
             <h3 className="font-bold text-lg mb-4">Routine</h3>
             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
               {(workout.exercises as any[]).map((ex, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted border border-border hover:bg-accent transition-colors">
                   <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
                     {i + 1}
                   </div>

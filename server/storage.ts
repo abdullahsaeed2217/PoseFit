@@ -8,10 +8,13 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getPrivateMessagesForUser(userId: number): Promise<PrivateMessage[]>;
   
   createWorkout(workout: InsertWorkout): Promise<Workout>;
   getWorkouts(): Promise<Workout[]>;
   getWorkout(id: number): Promise<Workout | undefined>;
+  updateWorkout(id: number, workout: Partial<InsertWorkout>): Promise<Workout>;
+  deleteWorkout(id: number): Promise<void>;
   
   createSession(session: InsertSession): Promise<Session>;
   getSessions(userId: number): Promise<Session[]>;
@@ -71,6 +74,19 @@ export class DatabaseStorage implements IStorage {
   async getWorkout(id: number): Promise<Workout | undefined> {
     const [workout] = await db.select().from(workouts).where(eq(workouts.id, id));
     return workout;
+  }
+
+  async updateWorkout(id: number, workout: Partial<InsertWorkout>): Promise<Workout> {
+    const [updated] = await db
+      .update(workouts)
+      .set(workout)
+      .where(eq(workouts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWorkout(id: number): Promise<void> {
+    await db.delete(workouts).where(eq(workouts.id, id));
   }
 
   async createSession(session: InsertSession): Promise<Session> {
@@ -160,25 +176,25 @@ export class DatabaseStorage implements IStorage {
 
   async getSubscriptions(year: number): Promise<(Subscription & { user: User })[]> {
     const approvedUsers = await db.select().from(users).where(and(eq(users.role, "member"), eq(users.status, "approved")));
-    const userIds = approvedUsers.map(u => u.id);
     
-    if (userIds.length === 0) return [];
+    if (approvedUsers.length === 0) return [];
 
-    const subs = await db.select().from(subscriptions).where(and(eq(subscriptions.year, year)));
+    const subs = await db.select().from(subscriptions).where(eq(subscriptions.year, year));
     
     return approvedUsers.map(user => {
-      const sub = subs.find(s => s.userId === user.id) || {
-        id: 0,
+      const subRecord = subs.find(s => s.userId === user.id);
+      return {
+        id: subRecord?.id || 0,
         userId: user.id,
         year,
-        months: {
+        months: (subRecord?.months as any) || {
           jan: false, feb: false, mar: false, apr: false,
           may: false, jun: false, jul: false, aug: false,
           sep: false, oct: false, nov: false, dec: false
         },
-        updatedAt: new Date()
+        updatedAt: subRecord?.updatedAt || new Date(),
+        user
       };
-      return { ...sub, user };
     });
   }
 
@@ -229,6 +245,14 @@ export class DatabaseStorage implements IStorage {
             (${privateMessages.senderId} = ${userB} AND ${privateMessages.receiverId} = ${userA})`
       )
       .orderBy(privateMessages.createdAt);
+  }
+
+  async getPrivateMessagesForUser(userId: number): Promise<PrivateMessage[]> {
+    return await db.select()
+      .from(privateMessages)
+      .where(
+        sql`${privateMessages.senderId} = ${userId} OR ${privateMessages.receiverId} = ${userId}`
+      );
   }
 }
 

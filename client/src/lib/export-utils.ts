@@ -8,7 +8,7 @@ export const exportToPDF = (sessions: Session[], workouts: Workout[]) => {
   const doc = new jsPDF() as any;
   
   doc.setFontSize(20);
-  doc.text("PoseToFit - Performance Report", 14, 22);
+  doc.text("PoseFit - Performance Report", 14, 22);
   doc.setFontSize(10);
   doc.text(`Generated on ${format(new Date(), "PPP")}`, 14, 30);
 
@@ -29,7 +29,7 @@ export const exportToPDF = (sessions: Session[], workouts: Workout[]) => {
     alternateRowStyles: { fillColor: [245, 245, 245] }
   });
 
-  doc.save(`PoseToFit_Report_${format(new Date(), "yyyyMMdd")}.pdf`);
+  doc.save(`PoseFit_Report_${format(new Date(), "yyyyMMdd")}.pdf`);
 };
 
 export const exportToExcel = (sessions: Session[], workouts: Workout[]) => {
@@ -44,5 +44,5 @@ export const exportToExcel = (sessions: Session[], workouts: Workout[]) => {
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Performance");
-  XLSX.writeFile(workbook, `PoseToFit_Report_${format(new Date(), "yyyyMMdd")}.xlsx`);
+  XLSX.writeFile(workbook, `PoseFit_Report_${format(new Date(), "yyyyMMdd")}.xlsx`);
 };

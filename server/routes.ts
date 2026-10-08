@@ -2,7 +2,6 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { registerAiRoutes } from "./ai-routes";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { hashPassword } from "./auth";
@@ -12,7 +11,6 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   setupAuth(app);
-  registerAiRoutes(app);
 
   // Automated Subscription Expiry Notification
   const checkSubscriptionExpiry = async () => {
@@ -24,16 +22,13 @@ export async function registerRoutes(
         const joiningDate = new Date(user.createdAt);
         const monthsDiff = (now.getFullYear() - joiningDate.getFullYear()) * 12 + now.getMonth() - joiningDate.getMonth();
         
-        // If they have been a member for at least one month
         if (monthsDiff >= 1) {
           const currentYear = now.getFullYear();
           const currentMonthName = now.toLocaleString('default', { month: 'short' }).toLowerCase();
           const subs = await storage.getSubscriptions(currentYear);
           const userSub = subs.find(s => s.userId === user.id);
           
-          // Check if subscription for current month is NOT marked as paid
           if (!userSub || !(userSub.months as any)?.[currentMonthName]) {
-            // Check if we already sent an expiry notification today
             const notifications = await storage.getNotifications(user.id);
             const todayNotification = notifications.find(n => 
               n.type === "warning" && 
@@ -56,10 +51,45 @@ export async function registerRoutes(
     }
   };
 
-  // Run on startup
   checkSubscriptionExpiry();
-  // Check every 24 hours
   setInterval(checkSubscriptionExpiry, 24 * 60 * 60 * 1000);
+
+  app.get("/api/trainers/approved", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const users = await storage.getAllUsers();
+    const approvedTrainers = users.filter(u => 
+      (u.role === "trainer" || u.role === "admin") && u.status === "approved"
+    );
+    res.json(approvedTrainers);
+  });
+
+  app.get("/api/messages/active-chats", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const userId = (req.user as any).id;
+    const role = (req.user as any).role;
+    const allUsers = await storage.getAllUsers();
+    
+    const messages = await storage.getPrivateMessagesForUser(userId);
+    const otherUserIds = new Set(messages.map(m => m.senderId === userId ? m.receiverId : m.senderId));
+    
+    let activeChatUsers;
+    
+    if (role === "admin") {
+      const professionalUsers = allUsers.filter(u => 
+        (u.role === "member" || u.role === "trainer") && u.status === "approved"
+      );
+      const professionalIds = new Set(professionalUsers.map(u => u.id));
+      activeChatUsers = allUsers.filter(u => otherUserIds.has(u.id) || professionalIds.has(u.id));
+    } else if (role === "trainer") {
+      const members = allUsers.filter(u => u.role === "member" && u.status === "approved");
+      const memberIds = new Set(members.map(m => m.id));
+      activeChatUsers = allUsers.filter(u => otherUserIds.has(u.id) || memberIds.has(u.id));
+    } else {
+      activeChatUsers = allUsers.filter(u => otherUserIds.has(u.id));
+    }
+    
+    res.json(activeChatUsers);
+  });
 
   app.get("/api/messages/:otherUserId", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -70,32 +100,38 @@ export async function registerRoutes(
   app.post("/api/messages", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const { receiverId, content } = req.body;
+    const sender = req.user as any;
+    
     const message = await storage.createPrivateMessage({
-      senderId: (req.user as any).id,
+      senderId: sender.id,
       receiverId,
       content
     });
 
-    // Create notification
+    // @ts-ignore
+    if (global.io) {
+      // @ts-ignore
+      global.io.emit("new_message", message);
+    }
+
     await storage.createNotification({
       userId: receiverId,
       type: "chat",
       title: "New Message",
-      message: `You received a new message from ${(req.user as any).username}`,
+      message: `${sender.name}: "${content.length > 50 ? content.substring(0, 50) + '...' : content}"`,
       read: false
     });
 
     res.status(201).json(message);
   });
 
-  // SEED DATA
   if (app.get("env") === "development") {
     const existingTrainer = await storage.getUserByUsername("trainer");
     if (!existingTrainer) {
       const hashedPassword = await hashPassword("trainer123");
       const trainer = await storage.createUser({
         username: "trainer",
-        email: "trainer@posetofit.com",
+        email: "trainer@PoseFit.com",
         password: hashedPassword,
         role: "trainer",
         name: "John Trainer",
@@ -113,7 +149,6 @@ export async function registerRoutes(
           { name: "Plank", duration: 60, target: "core" }
         ]
       });
-      console.log("Seeded trainer account: trainer / trainer123");
     }
 
     const existingAdmin = await storage.getUserByUsername("muhammadabdullahsaeed383@gmail.com");
@@ -127,7 +162,6 @@ export async function registerRoutes(
         name: "Muhammad Abdullah Saeed",
       });
       await storage.updateUser(admin.id, { status: "approved" });
-      console.log("Seeded admin account: muhammadabdullahsaeed383@gmail.com / abdullah1122");
     }
   }
 
@@ -158,6 +192,42 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/workouts/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "trainer") return res.sendStatus(403);
+    const id = parseInt(req.params.id);
+    const workout = await storage.getWorkout(id);
+    if (!workout) return res.sendStatus(404);
+    // @ts-ignore
+    if (workout.trainerId !== req.user.id) return res.sendStatus(403);
+    
+    try {
+      const updated = await storage.updateWorkout(id, req.body);
+      res.json(updated);
+    } catch (err) {
+      res.status(400).json({ message: "Failed to update workout" });
+    }
+  });
+
+  app.delete("/api/workouts/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // @ts-ignore
+    if (req.user.role !== "trainer") return res.sendStatus(403);
+    const id = parseInt(req.params.id);
+    const workout = await storage.getWorkout(id);
+    if (!workout) return res.sendStatus(404);
+    // @ts-ignore
+    if (workout.trainerId !== req.user.id) return res.sendStatus(403);
+    
+    try {
+      await storage.deleteWorkout(id);
+      res.sendStatus(200);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete workout" });
+    }
+  });
+
   app.post(api.sessions.create.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     try {
@@ -172,14 +242,19 @@ export async function registerRoutes(
 
   app.get(api.sessions.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // @ts-ignore
-    if (req.user.role === "trainer") {
+    const user = req.user as any;
+
+    if (user.role === "trainer" || user.role === "admin") {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (userId) {
+        const sessions = await storage.getSessions(userId);
+        return res.json(sessions);
+      }
       const sessions = await storage.getAllSessions();
-      res.json(sessions);
+      return res.json(sessions);
     } else {
-      // @ts-ignore
-      const sessions = await storage.getSessions(req.user.id);
-      res.json(sessions);
+      const sessions = await storage.getSessions(user.id);
+      return res.json(sessions);
     }
   });
 
@@ -198,8 +273,8 @@ export async function registerRoutes(
 
   app.get(api.notifications.list.path, async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // @ts-ignore
-    const list = await storage.getNotifications(req.user.id);
+    const user = req.user as any;
+    const list = await storage.getNotifications(user.id);
     res.json(list);
   });
 
@@ -258,13 +333,20 @@ export async function registerRoutes(
     res.sendStatus(200);
   });
 
-  app.get("/api/admin/subscriptions/:year", async (req, res) => {
+  app.get("/api/admin/subscriptions", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    // @ts-ignore
-    if (req.user.role !== "admin") return res.sendStatus(403);
-    const year = parseInt(req.params.year);
-    const subs = await storage.getSubscriptions(year);
-    res.json(subs);
+    const user = req.user as any;
+    if (user.role !== "admin") return res.sendStatus(403);
+    const year = parseInt(req.query.year as string) || new Date().getFullYear();
+    
+    try {
+      const results = await storage.getSubscriptions(year);
+      // Ensure results are always an array
+      res.json(Array.isArray(results) ? results : []);
+    } catch (error) {
+      console.error("[API] Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
   });
 
   app.post("/api/admin/subscriptions/toggle", async (req, res) => {

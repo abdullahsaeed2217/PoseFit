@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import { queryClient } from "@/lib/queryClient";
 import { Notification } from "@shared/schema";
-import { Bell, Check, Info, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Bell, Info, AlertTriangle, CheckCircle, XCircle, MessageSquare } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -15,10 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export function NotificationBell() {
-  const { data: notifications, isLoading } = useQuery<Notification[]>({
+  const [, setLocation] = useLocation();
+  const { data: notifications } = useQuery<Notification[]>({
     queryKey: [api.notifications.list.path],
+    refetchInterval: 5000,
   });
 
   const readMutation = useMutation({
@@ -31,13 +34,24 @@ export function NotificationBell() {
   });
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const chatUnreadCount = notifications?.filter(n => !n.read && n.type === "chat").length || 0;
 
   const getIcon = (type: string) => {
     switch (type) {
       case 'success': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
       case 'error': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'chat': return <MessageSquare className="w-4 h-4 text-primary" />;
       default: return <Info className="w-4 h-4 text-blue-500" />;
+    }
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    if (!n.read) {
+      readMutation.mutate(n.id);
+    }
+    if (n.type === "chat") {
+      setLocation("/chat");
     }
   };
 
@@ -68,8 +82,9 @@ export function NotificationBell() {
               {notifications?.map((n) => (
                 <DropdownMenuItem 
                   key={n.id} 
-                  className={`p-4 flex flex-col gap-1 focus:bg-white/5 cursor-default ${!n.read ? 'bg-primary/5' : ''}`}
-                  onClick={() => !n.read && readMutation.mutate(n.id)}
+                  className={`p-4 flex flex-col gap-1 focus:bg-white/5 ${n.type === 'chat' ? 'cursor-pointer hover:bg-primary/10' : 'cursor-default'} ${!n.read ? 'bg-primary/5' : ''}`}
+                  onClick={() => handleNotificationClick(n)}
+                  data-testid={`notification-item-${n.id}`}
                 >
                   <div className="flex items-center justify-between w-full gap-2">
                     <div className="flex items-center gap-2">

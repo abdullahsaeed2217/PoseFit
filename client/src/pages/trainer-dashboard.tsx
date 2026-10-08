@@ -38,7 +38,7 @@ export default function TrainerDashboard() {
     { name: "Jumping Jacks", reps: 20, sets: 3 }
   ]);
 
-  const members = allUsers?.filter((u: User) => u.role === "member") || [];
+    const members = allUsers?.filter((u: User) => u.role === "member" && u.status === "approved") || [];
   const selectedMember = members.find((m: User) => m.id.toString() === selectedMemberId);
   const memberSessions = sessions?.filter((s: Session) => s.userId.toString() === selectedMemberId) || [];
 
@@ -76,7 +76,7 @@ export default function TrainerDashboard() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">Trainer Hub</h1>
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">Trainer Hub</h1>
           <p className="text-muted-foreground">Manage your routines and analyze member performance.</p>
         </div>
         
@@ -86,23 +86,23 @@ export default function TrainerDashboard() {
               <Plus className="w-5 h-5" /> Create Workout
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-white/10 text-white sm:max-w-[600px]">
+          <DialogContent className="bg-card border-border sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>New Workout Routine</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="grid gap-2">
                 <Label>Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-background/50" required />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} className="bg-muted/50" required />
               </div>
               <div className="grid gap-2">
                 <Label>Description</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-background/50" required />
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="bg-muted/50" required />
               </div>
               <div className="grid gap-2">
                 <Label>Difficulty</Label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
-                  <SelectTrigger className="bg-background/50">
+                  <SelectTrigger className="bg-muted/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -120,7 +120,7 @@ export default function TrainerDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Member Selection */}
-        <Card className="glass-panel border-white/5 lg:col-span-1">
+        <Card className="bg-card border-border lg:col-span-1 shadow-sm">
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" /> Members
@@ -128,19 +128,19 @@ export default function TrainerDashboard() {
             <CardDescription>Select a member to view performance</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-border">
               {members.map((member: User) => (
                 <button
                   key={member.id}
                   onClick={() => setSelectedMemberId(member.id.toString())}
-                  className={`w-full text-left p-4 hover:bg-white/5 transition-colors flex items-center justify-between group ${selectedMemberId === member.id.toString() ? 'bg-primary/10' : ''}`}
+                  className={`w-full text-left p-4 hover:bg-muted/50 transition-colors flex items-center justify-between group ${selectedMemberId === member.id.toString() ? 'bg-primary/10' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">
                       {member.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-bold text-sm">{member.name}</p>
+                      <p className="font-bold text-sm text-foreground">{member.name}</p>
                       <p className="text-xs text-muted-foreground">{member.username}</p>
                     </div>
                   </div>
@@ -156,9 +156,9 @@ export default function TrainerDashboard() {
           {!selectedMember ? (
             <div className="grid grid-cols-1 gap-8">
               <Leaderboard />
-              <div className="h-full flex items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] p-12 text-center">
+              <div className="h-full flex items-center justify-center border-2 border-dashed border-border rounded-[2rem] p-12 text-center">
                 <div className="space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto">
+                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
                     <Activity className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <p className="text-muted-foreground">Select a member from the left to view detailed analysis and provide feedback.</p>
@@ -168,42 +168,42 @@ export default function TrainerDashboard() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="glass-panel border-white/5">
+                <Card className="bg-card border-border shadow-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Avg Accuracy</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-green-400">
+                    <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                       {memberSessions.length > 0 
                         ? Math.round(memberSessions.reduce((acc: number, s: Session) => acc + (s.score || 0), 0) / memberSessions.length)
                         : 0}%
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="glass-panel border-white/5">
+                <Card className="bg-card border-border shadow-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Workouts</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">{memberSessions.length}</div>
+                    <div className="text-3xl font-bold text-foreground">{memberSessions.length}</div>
                   </CardContent>
                 </Card>
-                <Card className="glass-panel border-white/5">
+                <Card className="bg-card border-border shadow-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Time</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold">
+                    <div className="text-3xl font-bold text-foreground">
                       {Math.round(memberSessions.reduce((acc: number, s: Session) => acc + (s.duration || 0), 0) / 60)}m
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              <h3 className="text-xl font-bold mt-8 mb-4">Recent Sessions & Posture Logs</h3>
+              <h3 className="text-xl font-bold mt-8 mb-4 text-foreground">Recent Sessions & Posture Logs</h3>
               <div className="space-y-4">
                 {memberSessions.map((session: Session) => (
-                  <Card key={session.id} className="border-white/5 bg-white/[0.02]">
+                  <Card key={session.id} className="bg-card border-border shadow-sm">
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row justify-between gap-6">
                         <div className="space-y-4 flex-1">
@@ -220,15 +220,15 @@ export default function TrainerDashboard() {
                             <div className="space-y-1">
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Accuracy Score</p>
                               <div className="flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-green-400" />
-                                <span className="text-xl font-bold">{session.score}%</span>
+                                <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                <span className="text-xl font-bold text-foreground">{session.score}%</span>
                               </div>
                             </div>
                             <div className="space-y-1">
                               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Duration</p>
                               <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-secondary" />
-                                <span className="text-xl font-bold">{Math.floor(session.duration! / 60)}:{String(session.duration! % 60).padStart(2, '0')}</span>
+                                <span className="text-xl font-bold text-foreground">{Math.floor(session.duration! / 60)}:{String(session.duration! % 60).padStart(2, '0')}</span>
                               </div>
                             </div>
                           </div>
@@ -239,7 +239,7 @@ export default function TrainerDashboard() {
                                 <MessageSquare className="w-3 h-3 text-primary" />
                                 <span className="text-[10px] uppercase font-bold text-primary tracking-widest">Your Feedback</span>
                               </div>
-                              <p className="text-sm italic">"{session.feedback}"</p>
+                              <p className="text-sm italic text-foreground">"{session.feedback}"</p>
                             </div>
                           )}
                         </div>
@@ -248,7 +248,7 @@ export default function TrainerDashboard() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-white/10 hover:bg-white/5"
+                            className="border-border hover:bg-muted"
                             onClick={() => {
                               setActiveSessionId(session.id);
                               setFeedbackText(session.feedback || "");
@@ -269,7 +269,7 @@ export default function TrainerDashboard() {
       </div>
 
       <Dialog open={activeSessionId !== null} onOpenChange={(o) => !o && setActiveSessionId(null)}>
-        <DialogContent className="bg-card border-white/10 text-white">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle>Provide Expert Feedback</DialogTitle>
             <DialogDescription>Your tips will help the member improve their posture and form.</DialogDescription>
@@ -278,7 +278,7 @@ export default function TrainerDashboard() {
             <Label>Feedback</Label>
             <Textarea 
               placeholder="e.g., Focus on keeping your knees tracking over your toes during squats..." 
-              className="bg-background/50 mt-2 h-32"
+              className="bg-muted/50 mt-2 h-32"
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
             />

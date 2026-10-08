@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Activity, Dumbbell, Loader2, Shield, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function AuthPage() {
   const { mutate: login, isPending: isLoginPending } = useLogin();
@@ -31,6 +32,15 @@ export default function AuthPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     login({ username, password }, {
+      onSuccess: (user) => {
+        if (user.role === "admin") {
+          window.location.href = "/admin";
+        } else if (user.role === "trainer") {
+          window.location.href = "/workouts";
+        } else {
+          window.location.href = "/";
+        }
+      },
       onError: (err) => toast({ 
         title: "Login failed", 
         description: err.message, 
@@ -55,13 +65,13 @@ export default function AuthPage() {
 
     register({ username, email, password, name, role }, {
       onSuccess: (user: any) => {
-        if (user.status === "pending") {
-          toast({
-            title: "Registration Successful",
-            description: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours.",
-            duration: 10000,
-          });
-        }
+        toast({
+          title: "Registration Successful",
+          description: "Your account status is pending to admin. Please check your approval status by signing in after 2 hours.",
+          duration: 10000,
+        });
+        // Stay on login tab (tabs defaultValue is "login", so it should ideally stay or we can force it)
+        window.location.reload(); // Quick way to reset to login tab with the toast visible
       },
       onError: (err) => toast({ 
         title: "Registration failed", 
@@ -72,36 +82,40 @@ export default function AuthPage() {
   };
 
   const getRoleIcon = () => {
-    if (role === "admin") return <Shield className="w-8 h-8 text-white" />;
-    if (role === "trainer") return <Dumbbell className="w-8 h-8 text-white" />;
-    return <Activity className="w-8 h-8 text-white" />;
+    if (role === "admin") return <Shield className="w-8 h-8 text-primary-foreground" />;
+    if (role === "trainer") return <Dumbbell className="w-8 h-8 text-primary-foreground" />;
+    return <Activity className="w-8 h-8 text-primary-foreground" />;
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat relative">
       <div className="absolute inset-0 bg-background/90 backdrop-blur-sm" />
+      
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
 
       <div className="relative z-10 w-full max-w-md px-4">
         <div className="mb-8 text-center space-y-2">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-2xl shadow-primary/30 mb-4">
             {getRoleIcon()}
           </div>
-          <h1 className="text-4xl font-display font-bold text-white">PoseToFit</h1>
+          <h1 className="text-4xl font-display font-bold text-foreground dark:text-white">PoseFit</h1>
           <p className="text-muted-foreground">
             {role === "admin" ? "System Administration Access" : "AI-powered personal training at home"}
           </p>
         </div>
 
         <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-card/50 backdrop-blur border border-white/5 p-1 mb-4 h-14 rounded-xl">
-            <TabsTrigger value="login" className="rounded-lg h-12 data-[state=active]:bg-primary data-[state=active]:text-white">Login</TabsTrigger>
-            <TabsTrigger value="register" className="rounded-lg h-12 data-[state=active]:bg-secondary data-[state=active]:text-background">Sign Up</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-card/50 backdrop-blur border border-border p-1 mb-4 h-14 rounded-xl">
+            <TabsTrigger value="login" className="rounded-lg h-12 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Login</TabsTrigger>
+            <TabsTrigger value="register" className="rounded-lg h-12 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">Sign Up</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login">
-            <Card className="glass-panel border-white/10">
+            <Card className="glass-panel border-border">
               <CardHeader>
-                <CardTitle>{role === "admin" ? "Admin Login" : "Welcome back"}</CardTitle>
+                <CardTitle className="text-foreground">{role === "admin" ? "Admin Login" : "Welcome back"}</CardTitle>
                 <CardDescription>Enter your credentials to access your dashboard</CardDescription>
               </CardHeader>
               <form onSubmit={handleLogin}>
@@ -113,7 +127,7 @@ export default function AuthPage() {
                       placeholder="johndoe" 
                       value={username} 
                       onChange={(e) => setUsername(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-primary"
+                      className="bg-background/50 border-border focus:border-primary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -124,7 +138,7 @@ export default function AuthPage() {
                       placeholder="••••••••" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-primary"
+                      className="bg-background/50 border-border focus:border-primary"
                     />
                   </div>
                 </CardContent>
@@ -138,9 +152,9 @@ export default function AuthPage() {
           </TabsContent>
           
           <TabsContent value="register">
-            <Card className="glass-panel border-white/10">
+            <Card className="glass-panel border-border">
               <CardHeader>
-                <CardTitle>Create Account</CardTitle>
+                <CardTitle className="text-foreground">Create Account</CardTitle>
                 <CardDescription>Join today and start your fitness journey</CardDescription>
               </CardHeader>
               <form onSubmit={handleRegister}>
@@ -152,7 +166,7 @@ export default function AuthPage() {
                       placeholder="John Doe" 
                       value={name} 
                       onChange={(e) => setName(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-secondary"
+                      className="bg-background/50 border-border focus:border-secondary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -162,7 +176,7 @@ export default function AuthPage() {
                       placeholder="johndoe" 
                       value={username} 
                       onChange={(e) => setUsername(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-secondary"
+                      className="bg-background/50 border-border focus:border-secondary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -173,7 +187,7 @@ export default function AuthPage() {
                       placeholder="john@example.com" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-secondary"
+                      className="bg-background/50 border-border focus:border-secondary"
                     />
                   </div>
                   <div className="space-y-2">
@@ -184,7 +198,7 @@ export default function AuthPage() {
                       placeholder="••••••••" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)}
-                      className="bg-background/50 border-white/10 focus:border-secondary"
+                      className="bg-background/50 border-border focus:border-secondary"
                     />
                   </div>
                   
@@ -200,7 +214,7 @@ export default function AuthPage() {
                           <RadioGroupItem value="member" id="member" className="peer sr-only" />
                           <Label
                             htmlFor="member"
-                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-secondary peer-data-[state=checked]:bg-secondary/10 [&:has([data-state=checked])]:border-primary transition-all cursor-pointer text-center"
+                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-secondary peer-data-[state=checked]:bg-secondary/10 [&:has([data-state=checked])]:border-primary transition-all cursor-pointer text-center text-foreground"
                           >
                             <Activity className="mb-2 h-6 w-6" />
                             Member
@@ -210,7 +224,7 @@ export default function AuthPage() {
                           <RadioGroupItem value="trainer" id="trainer" className="peer sr-only" />
                           <Label
                             htmlFor="trainer"
-                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary transition-all cursor-pointer text-center"
+                            className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 [&:has([data-state=checked])]:border-primary transition-all cursor-pointer text-center text-foreground"
                           >
                             <Dumbbell className="mb-2 h-6 w-6" />
                             Trainer

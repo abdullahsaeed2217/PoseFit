@@ -19,7 +19,7 @@ export const api = {
     register: {
       method: 'POST' as const,
       path: '/api/register',
-      input: insertUserSchema.omit({ status: true }),
+      input: insertUserSchema,
       responses: {
         201: z.custom<User>(),
         400: errorSchemas.validation,

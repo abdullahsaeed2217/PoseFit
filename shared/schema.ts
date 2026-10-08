@@ -91,6 +91,7 @@ export const privateMessages = pgTable("private_messages", {
   senderId: integer("sender_id").notNull(),
   receiverId: integer("receiver_id").notNull(),
   content: text("content").notNull(),
+  read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

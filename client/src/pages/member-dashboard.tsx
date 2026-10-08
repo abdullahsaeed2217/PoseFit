@@ -49,7 +49,7 @@ export default function MemberDashboard() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-2">
             Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{user?.name}</span>
           </h1>
           <p className="text-muted-foreground text-lg">Ready to crush your goals today?</p>
@@ -62,7 +62,7 @@ export default function MemberDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-8">
-        <TabsList className="bg-white/5 border border-white/10 p-1">
+        <TabsList className="bg-muted border border-border p-1">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Reporting & Analytics</TabsTrigger>
         </TabsList>
@@ -70,42 +70,42 @@ export default function MemberDashboard() {
         <TabsContent value="overview" className="space-y-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-primary/5">
+            <Card className="bg-card border-border shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Points</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-white">{user?.totalPoints || 0}</span>
-                  <span className="text-sm text-yellow-400 font-medium flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-400" /> XP
+                  <span className="text-4xl font-bold text-foreground">{user?.totalPoints || 0}</span>
+                  <span className="text-sm text-yellow-600 dark:text-yellow-400 font-medium flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-current" /> XP
                   </span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-secondary/5">
+            <Card className="bg-card border-border shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Minutes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-white">{Math.round(totalDuration / 60)}</span>
+                  <span className="text-4xl font-bold text-foreground">{Math.round(totalDuration / 60)}</span>
                   <span className="text-sm text-muted-foreground">mins</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="glass-panel border-white/5 bg-gradient-to-br from-card to-indigo-500/5">
+            <Card className="bg-card border-border shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Avg Form Score</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-white">{avgScore}%</span>
+                  <span className="text-4xl font-bold text-foreground">{avgScore}%</span>
                 </div>
                 {/* Simple progress bar */}
-                <div className="h-2 w-full bg-white/10 rounded-full mt-3 overflow-hidden">
+                <div className="h-2 w-full bg-muted rounded-full mt-3 overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" 
                     style={{ width: `${avgScore}%` }}
@@ -120,14 +120,14 @@ export default function MemberDashboard() {
             <div className="lg:col-span-2 space-y-12">
               <section className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Recent History</h2>
+                  <h2 className="text-2xl font-bold text-foreground">Recent History</h2>
                   <Link href="/workouts" className="text-primary hover:text-primary/80 font-medium text-sm flex items-center gap-1">
                     Start New <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
                 <div className="space-y-4">
                   {sessions?.length === 0 ? (
-                    <div className="text-center py-12 bg-white/5 rounded-2xl border border-dashed border-white/10">
+                    <div className="text-center py-12 bg-muted/30 rounded-2xl border border-dashed border-border">
                       <p className="text-muted-foreground">No recent activity. Start your first workout!</p>
                       <Link href="/workouts" className="mt-4 inline-block">
                         <Button variant="outline" size="sm">Explore Workouts</Button>
@@ -135,14 +135,14 @@ export default function MemberDashboard() {
                     </div>
                   ) : (
                     sessions?.slice(0, 5).map((session) => (
-                      <Card key={session.id} className="border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors">
+                      <Card key={session.id} className="bg-card border-border hover:bg-muted/30 transition-colors shadow-sm">
                         <CardContent className="p-6 flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                               <CheckCircle2 className="w-6 h-6" />
                             </div>
                             <div>
-                              <h4 className="font-bold">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
+                              <h4 className="font-bold text-foreground">{workouts?.find(w => w.id === session.workoutId)?.title || "Workout Session"}</h4>
                               <p className="text-xs text-muted-foreground">
                                 {session.completedAt ? format(new Date(session.completedAt), "MMM d, yyyy • h:mm a") : "Unknown"}
                               </p>
@@ -150,14 +150,14 @@ export default function MemberDashboard() {
                           </div>
                           <div className="flex items-center gap-8">
                             <div className="text-right">
-                              <div className="text-sm font-bold">{session.score}%</div>
+                              <div className="text-sm font-bold text-foreground">{session.score}%</div>
                               <div className="text-[10px] uppercase font-bold text-muted-foreground">Accuracy</div>
                             </div>
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="hover-elevate">Details</Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-2xl bg-card border-white/10 text-white p-0 overflow-hidden">
+                              <DialogContent className="max-w-2xl bg-card border-border p-0 overflow-hidden">
                                 <WorkoutSummary session={session} workout={workouts?.find(w => w.id === session.workoutId)} />
                               </DialogContent>
                             </Dialog>
@@ -174,7 +174,7 @@ export default function MemberDashboard() {
             <div className="space-y-6">
               <Leaderboard />
               
-              <Card className="glass-panel border-white/5 h-[400px]">
+              <Card className="bg-card border-border shadow-sm h-[400px]">
                 <CardHeader>
                   <CardTitle className="text-lg">Recent Form Scores</CardTitle>
                 </CardHeader>
@@ -182,14 +182,14 @@ export default function MemberDashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                       <XAxis dataKey="name" hide />
-                      <YAxis stroke="#666" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
                       <Tooltip 
-                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                        contentStyle={{ backgroundColor: '#1a1b26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                        cursor={{fill: 'rgba(0,0,0,0.05)'}}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--foreground))' }}
                       />
                       <Bar dataKey="score" radius={[4, 4, 0, 0]}>
                         {chartData?.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(263, 85%, 60%)' : 'hsl(172, 66%, 50%)'} />
+                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'} />
                         ))}
                       </Bar>
                     </BarChart>

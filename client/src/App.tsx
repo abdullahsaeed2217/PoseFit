@@ -7,6 +7,8 @@ import { LayoutShell } from "@/components/layout-shell";
 import { useUser } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
+import Analytics from "@/pages/analytics";
+import LeaderboardPage from "@/pages/leaderboard";
 import HomePage from "@/pages/home";
 import AuthPage from "@/pages/auth";
 import MemberDashboard from "@/pages/member-dashboard";
@@ -17,6 +19,7 @@ import WorkoutsPage from "@/pages/workouts";
 import WorkoutTracking from "@/pages/workout-tracking";
 import AiPostureDetector from "@/pages/ai-posture-detector";
 import ChatPage from "@/pages/chat";
+import SubscriptionsPage from "@/pages/subscriptions";
 import NotFound from "@/pages/not-found";
 
 import { NotificationBell } from "@/components/notifications";
@@ -45,8 +48,8 @@ function Router() {
           <p className="text-muted-foreground text-lg">
             Your account status is pending to admin. Please check your approval status by signing in after 2 hours.
           </p>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="mt-8 border-white/10"
             onClick={() => window.location.href = "/auth"}
           >
@@ -61,7 +64,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Member Routes */}
       <Route path="/member-dashboard">
         <LayoutShell headerAction={<NotificationBell />}>
@@ -97,6 +100,18 @@ function Router() {
         </LayoutShell>
       </Route>
 
+      <Route path="/analytics">
+        <LayoutShell headerAction={<NotificationBell />}>
+          <Analytics />
+        </LayoutShell>
+      </Route>
+
+      <Route path="/leaderboard">
+        <LayoutShell headerAction={<NotificationBell />}>
+          <LeaderboardPage />
+        </LayoutShell>
+      </Route>
+
       {/* Trainer Routes */}
       <Route path="/trainer-dashboard">
         <LayoutShell headerAction={<NotificationBell />}>
@@ -111,19 +126,25 @@ function Router() {
         </LayoutShell>
       </Route>
 
+      <Route path="/subscriptions">
+        <LayoutShell headerAction={<NotificationBell />}>
+          <SubscriptionsPage />
+        </LayoutShell>
+      </Route>
+
       {/* Root Redirect for authenticated users */}
       <Route path="/dashboard">
         {!user ? <Redirect to="/auth" /> : <Redirect to={
-          user.role === "admin" ? "/admin-dashboard" : 
-          user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
+          user.role === "admin" ? "/admin-dashboard" :
+            user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
         } />}
       </Route>
 
       <Route path="/auth">
         {user ? (
           <Redirect to={
-            user.role === "admin" ? "/admin-dashboard" : 
-            user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
+            user.role === "admin" ? "/admin-dashboard" :
+              user.role === "trainer" ? "/trainer-dashboard" : "/member-dashboard"
           } />
         ) : (
           <AuthPage />
@@ -135,13 +156,17 @@ function Router() {
   );
 }
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
